@@ -3,6 +3,7 @@
 #include "MyEngine.h"
 #include "Config.h"
 #include "Timer.h"
+#include "MouseAndKeyboard.h"
 
 const extern int Width;		//window width
 const extern int Height;		//window height
@@ -95,6 +96,8 @@ int messageloop() {
 			
 			frameTime = GetFrameTime();
 
+			DetectInput(frameTime);
+
 			UpdateScene(frameTime);
 			DrawScene();
 		}
@@ -154,6 +157,13 @@ int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 	if (!InitScene())    //Initialize our scene
 	{
 		MessageBox(0, L"Scene Initialization - Failed",
+			L"Error", MB_OK);
+		return 0;
+	}
+
+	if (!InitDirectInput(hInstance))	//Initialize direct input
+	{
+		MessageBox(0, L"Direct Input Initialization - Failed",
 			L"Error", MB_OK);
 		return 0;
 	}

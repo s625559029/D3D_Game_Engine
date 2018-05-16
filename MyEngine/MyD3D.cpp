@@ -7,6 +7,8 @@
 #include "Timer.h"
 #include "ObjectsPool.h"
 #include "FPSPrinter.h"
+#include "Light.h"
+#include "MouseAndKeyboard.h"
 
 ObjectsPool* objects_pool;
 
@@ -32,17 +34,31 @@ Cube cube2;
 
 float rot = 0.01f;
 
+//Constant buffer for objects
 struct cbPerObject
 {
 	XMMATRIX WVP;
+	XMMATRIX World;
 };
 
 cbPerObject _cbPerObj;
 
+//Constant buffer for light
+struct cbPerFrame
+{
+	Light light;
+};
+
+cbPerFrame _cbPerFrame;
+
+Light light;
+
+//Declare input layout
 D3D11_INPUT_ELEMENT_DESC layout[] =
 {
 	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "NORMAL",     0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 };
 
 UINT numElements = ARRAYSIZE(layout);
@@ -136,7 +152,7 @@ bool InitializeDirect3d11App(HINSTANCE hInstance)
 
 void ReleaseObjects()
 {
-	
+	objects_pool->clean();
 }
 
 bool InitScene()
@@ -147,53 +163,60 @@ bool InitScene()
 	//Shader process
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "VS", "vs_4_0", 0, 0, 0, &(objects_pool->VS_Buffer), 0, 0);
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "PS", "ps_4_0", 0, 0, 0, &(objects_pool->PS_Buffer), 0, 0);
+	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "D2D_PS", "ps_4_0", 0, 0, 0, &(objects_pool->D2D_PS_Buffer), 0, 0);
 
 	objects_pool->d3d11Device->CreateVertexShader(objects_pool->VS_Buffer->GetBufferPointer(), 
 		objects_pool->VS_Buffer->GetBufferSize(), NULL, &(objects_pool->VS));
 	objects_pool->d3d11Device->CreatePixelShader(objects_pool->PS_Buffer->GetBufferPointer(), 
 		objects_pool->PS_Buffer->GetBufferSize(), NULL, &(objects_pool->PS));
+	objects_pool->d3d11Device->CreatePixelShader(objects_pool->D2D_PS_Buffer->GetBufferPointer(),
+		objects_pool->D2D_PS_Buffer->GetBufferSize(), NULL, &(objects_pool->D2D_PS));
 
 	objects_pool->d3d11DevCon->VSSetShader(objects_pool->VS, 0, 0);
 	objects_pool->d3d11DevCon->PSSetShader(objects_pool->PS, 0, 0);
+
+	light.dir = XMFLOAT3(0.25f, 0.5f, -1.0f);
+	light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	//Create the vertex buffer
 	Vertex v[] =
 	{
 		// Front Face
-		Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
-		Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f),
-		Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f),
-		Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
+		Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+		Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
+		Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
+		Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
 
 		// Back Face
-		Vertex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f),
-		Vertex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f),
-		Vertex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f),
-		Vertex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f),
+		Vertex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f,-1.0f, -1.0f, 1.0f),
+		Vertex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 1.0f),
+		Vertex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 1.0f),
+		Vertex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f,-1.0f,  1.0f, 1.0f),
 
 		// Top Face
-		Vertex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f),
-		Vertex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f),
-		Vertex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f),
-		Vertex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f),
+		Vertex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f,-1.0f, 1.0f, -1.0f),
+		Vertex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f,-1.0f, 1.0f,  1.0f),
+		Vertex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  1.0f),
+		Vertex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f),
 
 		// Bottom Face
-		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
-		Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
-		Vertex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f),
-		Vertex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f),
+		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+		Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
+		Vertex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  1.0f),
+		Vertex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f,-1.0f, -1.0f,  1.0f),
 
 		// Left Face
-		Vertex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f),
-		Vertex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f),
-		Vertex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f),
-		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
+		Vertex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f,-1.0f, -1.0f,  1.0f),
+		Vertex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f,-1.0f,  1.0f,  1.0f),
+		Vertex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f,-1.0f,  1.0f, -1.0f),
+		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
 
 		// Right Face
-		Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
-		Vertex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f),
-		Vertex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f),
-		Vertex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f),
+		Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
+		Vertex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  1.0f, -1.0f),
+		Vertex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f),
+		Vertex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 1.0f, -1.0f,  1.0f),
 	};
 
 	DWORD indices[] = {
@@ -294,6 +317,17 @@ bool InitScene()
 
 	objects_pool->d3d11Device->CreateBuffer(&cbbd, NULL, &(objects_pool->cbPerObjectBuffer));
 
+	//Create the buffer to send to the cbuffer per frame in effect file
+	ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
+
+	cbbd.Usage = D3D11_USAGE_DEFAULT;
+	cbbd.ByteWidth = sizeof(cbPerFrame);
+	cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbbd.CPUAccessFlags = 0;
+	cbbd.MiscFlags = 0;
+
+	objects_pool->d3d11Device->CreateBuffer(&cbbd, NULL, &(objects_pool->cbPerFrameBuffer));
+
 	D3DX11CreateShaderResourceViewFromFile(objects_pool->d3d11Device, L"diablo.jpg", NULL, NULL, &(objects_pool->CubesTexture), NULL );
 
 	//Create blend description
@@ -353,14 +387,22 @@ void UpdateScene(double time)
 	if (rot > 6.28f)
 		rot = 0.0f;
 
-	XMVECTOR rotaxis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	cube1.Rotation = XMMatrixRotationAxis(rotaxis, rot);
+	//Define cube1's world space matrix
+	XMVECTOR rotyaxis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR rotzaxis = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR rotxaxis = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+
+	XMMATRIX Rotation = XMMatrixRotationAxis(rotyaxis, rot);
+	XMMATRIX Rotationx = XMMatrixRotationAxis(rotxaxis, rotx);
+	XMMATRIX Rotationz = XMMatrixRotationAxis(rotzaxis, rotz);
+
+	cube1.Rotation = Rotation * Rotationx * Rotationz;
 	cube1.Translation = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
 	cube1.Scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
 
-	cube2.Rotation = XMMatrixRotationAxis(rotaxis, -rot);
+	cube2.Rotation = XMMatrixRotationAxis(rotyaxis, -rot);
 	cube2.Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	cube2.Scale = XMMatrixScaling(1.3f, 1.3f, 1.3f);
+	cube2.Scale = XMMatrixScaling(scaleX, scaleY, 1.0f);
 }
 
 void DrawScene()
@@ -368,8 +410,16 @@ void DrawScene()
 	D3DXCOLOR bgColor(red, green, blue, 1.0f);
 
 	objects_pool->d3d11DevCon->ClearRenderTargetView(objects_pool->renderTargetView, bgColor);
-
 	objects_pool->d3d11DevCon->ClearDepthStencilView(objects_pool->depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	//Update constant buffer for light
+	_cbPerFrame.light = light;
+	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerFrameBuffer, 0, NULL, &_cbPerFrame, 0, 0);
+	objects_pool->d3d11DevCon->PSSetConstantBuffers(0, 1, &(objects_pool->cbPerFrameBuffer));
+
+	//Reset Vertex and Pixel Shaders
+	objects_pool->d3d11DevCon->VSSetShader(objects_pool->VS, 0, 0);
+	objects_pool->d3d11DevCon->PSSetShader(objects_pool->PS, 0, 0);
 
 	//Set our Render Target
 	objects_pool->d3d11DevCon->OMSetRenderTargets(1, &(objects_pool->renderTargetView), objects_pool->depthStencilView);
@@ -388,6 +438,7 @@ void DrawScene()
 	//Draw cube1
 	WVP = cube1.getTransformMatrix() * camera.getCamView() * camera.getCamProjection();
 
+	_cbPerObj.World = XMMatrixTranspose(cube1.getTransformMatrix());
 	_cbPerObj.WVP = XMMatrixTranspose(WVP);
 
 	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
@@ -403,6 +454,7 @@ void DrawScene()
 	//Draw cube2
 	WVP = cube2.getTransformMatrix() * camera.getCamView() * camera.getCamProjection();
 
+	_cbPerObj.World = XMMatrixTranspose(cube2.getTransformMatrix());
 	_cbPerObj.WVP = XMMatrixTranspose(WVP);
 
 	objects_pool->d3d11DevCon->UpdateSubresource((objects_pool->cbPerObjectBuffer), 0, NULL, &_cbPerObj, 0, 0);

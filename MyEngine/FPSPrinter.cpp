@@ -7,6 +7,7 @@
 struct cbPerObject
 {
 	XMMATRIX WVP;
+	XMMATRIX World;
 };
 
 bool InitD2D_D3D101_DWrite(IDXGIAdapter1 *Adapter)
@@ -103,10 +104,10 @@ void InitD2DScreenTexture()
 	Vertex v[] =
 	{
 		// Front Face
-		Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
-		Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f),
-		Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f),
-		Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
+		Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+		Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
+		Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
+		Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
 	};
 
 	DWORD indices[] = {
@@ -218,6 +219,7 @@ void RenderText(std::wstring text, int inInt)
 	XMMATRIX WVP;
 	WVP = XMMatrixIdentity();
 	cbPerObject _cbPerObj;
+	_cbPerObj.World = XMMatrixTranspose(WVP);
 	_cbPerObj.WVP = XMMatrixTranspose(WVP);
 	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
 	objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &(objects_pool->cbPerObjectBuffer));

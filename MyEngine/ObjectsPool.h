@@ -44,6 +44,16 @@ public:
 	IDWriteFactory *DWriteFactory;
 	IDWriteTextFormat *TextFormat;
 
+	//Light objects
+	ID3D11Buffer* cbPerFrameBuffer;
+	ID3D11PixelShader* D2D_PS;
+	ID3D10Blob* D2D_PS_Buffer;
+
+	//Mouse & Keyboard objects
+	IDirectInputDevice8* DIKeyboard;
+	IDirectInputDevice8* DIMouse;
+	LPDIRECTINPUT8 DirectInput;
+
 private:
 	static ObjectsPool* instance;
 

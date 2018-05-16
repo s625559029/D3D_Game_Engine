@@ -40,4 +40,14 @@ void ObjectsPool::clean()
 	DWriteFactory->Release();
 	TextFormat->Release();
 	d2dTexture->Release();
+
+	//Clean light objects
+	cbPerFrameBuffer->Release();
+	D2D_PS->Release();
+	D2D_PS_Buffer->Release();
+
+	//Clean direct input objects
+	DIKeyboard->Unacquire();
+	DIMouse->Unacquire();
+	DirectInput->Release();
 }
