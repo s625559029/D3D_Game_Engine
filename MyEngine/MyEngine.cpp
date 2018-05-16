@@ -2,6 +2,7 @@
 #include "MyD3D.h"
 #include "MyEngine.h"
 #include "Config.h"
+#include "Timer.h"
 
 const extern int Width;		//window width
 const extern int Height;		//window height
@@ -84,7 +85,17 @@ int messageloop() {
 		//Do D3D stuff
 		else
 		{
-			UpdateScene();
+			frameCount++;
+			if (GetTime() > 1.0f)
+			{
+				fps = frameCount;
+				frameCount = 0;
+				StartTimer();
+			}
+			
+			frameTime = GetFrameTime();
+
+			UpdateScene(frameTime);
 			DrawScene();
 		}
 	}
