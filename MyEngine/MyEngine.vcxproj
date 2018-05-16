@@ -152,6 +152,7 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="D3DHeader.h" />
+    <ClInclude Include="FPSPrinter.h" />
     <ClInclude Include="MyD3D.h" />
     <ClInclude Include="MyEngine.h" />
     <ClInclude Include="ObjectsPool.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FPSPrinter.cpp" />
     <ClCompile Include="MyD3D.cpp" />
     <ClCompile Include="MyEngine.cpp" />
     <ClCompile Include="ObjectsPool.cpp" />
