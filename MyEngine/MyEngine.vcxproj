@@ -152,6 +152,7 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="D3DHeader.h" />
+    <ClInclude Include="FPSCamera.h" />
     <ClInclude Include="FPSPrinter.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="MouseAndKeyboard.h" />
@@ -164,6 +165,7 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FPSCamera.cpp" />
     <ClCompile Include="FPSPrinter.cpp" />
     <ClCompile Include="MouseAndKeyboard.cpp" />
     <ClCompile Include="MyD3D.cpp" />

@@ -96,8 +96,6 @@ int messageloop() {
 			
 			frameTime = GetFrameTime();
 
-			DetectInput(frameTime);
-
 			UpdateScene(frameTime);
 			DrawScene();
 		}

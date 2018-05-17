@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Config.h"
 #include "MyD3D.h"
-#include "Camera.h"
+#include "FPSCamera.h"
 #include "Cube.h"
 #include "Vertex.h"
 #include "Timer.h"
@@ -23,14 +23,13 @@ XMMATRIX WVP;
 XMMATRIX World;
 
 //Camera information
-Camera camera(XMVectorSet(0.0f, 3.0f, -8.0f, 0.0f),
+FPSCamera camera(XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f),
 	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
 	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),
 	0.4f*3.14f, 1.0f, 1000.0f);
 
 //Objects information
 Cube cube1;
-Cube cube2;
 
 float rot = 0.01f;
 
@@ -90,7 +89,7 @@ bool InitializeDirect3d11App(HINSTANCE hInstance)
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = 1;
 	swapChainDesc.OutputWindow = hwnd;
-	swapChainDesc.Windowed = TRUE;
+	swapChainDesc.Windowed = false;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 	IDXGIFactory1 *DXGIFactory;
@@ -175,81 +174,32 @@ bool InitScene()
 	objects_pool->d3d11DevCon->VSSetShader(objects_pool->VS, 0, 0);
 	objects_pool->d3d11DevCon->PSSetShader(objects_pool->PS, 0, 0);
 
-	light.dir = XMFLOAT3(0.25f, 0.5f, -1.0f);
+	//Create the light
+	light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	//Create the vertex buffer
+	//Create the ground
 	Vertex v[] =
 	{
-		// Front Face
-		Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-		Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-		Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-		Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-
-		// Back Face
-		Vertex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f,-1.0f, -1.0f, 1.0f),
-		Vertex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 1.0f),
-		Vertex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 1.0f),
-		Vertex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f,-1.0f,  1.0f, 1.0f),
-
-		// Top Face
-		Vertex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f,-1.0f, 1.0f, -1.0f),
-		Vertex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f,-1.0f, 1.0f,  1.0f),
-		Vertex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  1.0f),
-		Vertex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f),
-
 		// Bottom Face
-		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-		Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-		Vertex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  1.0f),
-		Vertex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f,-1.0f, -1.0f,  1.0f),
-
-		// Left Face
-		Vertex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f,-1.0f, -1.0f,  1.0f),
-		Vertex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f,-1.0f,  1.0f,  1.0f),
-		Vertex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-
-		// Right Face
-		Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-		Vertex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-		Vertex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f),
-		Vertex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 1.0f, -1.0f,  1.0f),
+		Vertex(-1.0f, -1.0f, -1.0f, 100.0f, 100.0f, 0.0f, 1.0f, 0.0f),
+		Vertex(1.0f, -1.0f, -1.0f,   0.0f, 100.0f, 0.0f, 1.0f, 0.0f),
+		Vertex(1.0f, -1.0f,  1.0f,   0.0f,   0.0f, 0.0f, 1.0f, 0.0f),
+		Vertex(-1.0f, -1.0f,  1.0f, 100.0f,   0.0f, 0.0f, 1.0f, 0.0f),
 	};
 
 	DWORD indices[] = {
-		// Front Face
 		0,  1,  2,
 		0,  2,  3,
-
-		// Back Face
-		4,  5,  6,
-		4,  6,  7,
-
-		// Top Face
-		8,  9, 10,
-		8, 10, 11,
-
-		// Bottom Face
-		12, 13, 14,
-		12, 14, 15,
-
-		// Left Face
-		16, 17, 18,
-		16, 18, 19,
-
-		// Right Face
-		20, 21, 22,
-		20, 22, 23
 	};
 
+	//Create index buffer
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
 
 	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexBufferDesc.ByteWidth = sizeof(DWORD) * 12 * 3;
+	indexBufferDesc.ByteWidth = sizeof(DWORD) * 2 * 3;
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBufferDesc.CPUAccessFlags = 0;
 	indexBufferDesc.MiscFlags = 0;
@@ -259,14 +209,12 @@ bool InitScene()
 	indexBufferData.pSysMem = indices;
 	objects_pool->d3d11Device->CreateBuffer(&indexBufferDesc, &indexBufferData, &(objects_pool->squareIndexBuffer));
 
-	objects_pool->d3d11DevCon->IASetIndexBuffer(objects_pool->squareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-
+	//Create vertex buffer
 	D3D11_BUFFER_DESC vertexBufferDesc;
 	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
 
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.ByteWidth = sizeof(Vertex) * 24;
+	vertexBufferDesc.ByteWidth = sizeof(Vertex) * 4;
 	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDesc.CPUAccessFlags = 0;
 	vertexBufferDesc.MiscFlags = 0;
@@ -276,10 +224,6 @@ bool InitScene()
 	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
 	vertexBufferData.pSysMem = v;
 	objects_pool->d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &(objects_pool->squareVertBuffer));
-
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	objects_pool->d3d11DevCon->IASetVertexBuffers(0, 1, &(objects_pool->squareVertBuffer), &stride, &offset);
 
 	//Create input layout
 	objects_pool->d3d11Device->CreateInputLayout(layout, numElements, objects_pool->VS_Buffer->GetBufferPointer(),
@@ -305,7 +249,7 @@ bool InitScene()
 	//Set the Viewport
 	objects_pool->d3d11DevCon->RSSetViewports(1, &viewport);
 
-	//Create the buffer to send to the cbuffer in effect file
+	//Create the buffer to send to the cbuffer per object in effect file
 	D3D11_BUFFER_DESC cbbd;
 	ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
 
@@ -328,7 +272,7 @@ bool InitScene()
 
 	objects_pool->d3d11Device->CreateBuffer(&cbbd, NULL, &(objects_pool->cbPerFrameBuffer));
 
-	D3DX11CreateShaderResourceViewFromFile(objects_pool->d3d11Device, L"diablo.jpg", NULL, NULL, &(objects_pool->CubesTexture), NULL );
+	D3DX11CreateShaderResourceViewFromFile(objects_pool->d3d11Device, L"grass.jpg", NULL, NULL, &(objects_pool->CubesTexture), NULL );
 
 	//Create blend description
 	D3D11_BLEND_DESC blendDesc;
@@ -383,26 +327,11 @@ bool InitScene()
 
 void UpdateScene(double time)
 {
-	rot += 1.0f * time;
-	if (rot > 6.28f)
-		rot = 0.0f;
+	camera.DetectInput(time);
 
 	//Define cube1's world space matrix
-	XMVECTOR rotyaxis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR rotzaxis = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XMVECTOR rotxaxis = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-
-	XMMATRIX Rotation = XMMatrixRotationAxis(rotyaxis, rot);
-	XMMATRIX Rotationx = XMMatrixRotationAxis(rotxaxis, rotx);
-	XMMATRIX Rotationz = XMMatrixRotationAxis(rotzaxis, rotz);
-
-	cube1.Rotation = Rotation * Rotationx * Rotationz;
-	cube1.Translation = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
-	cube1.Scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-
-	cube2.Rotation = XMMatrixRotationAxis(rotyaxis, -rot);
-	cube2.Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	cube2.Scale = XMMatrixScaling(scaleX, scaleY, 1.0f);
+	cube1.Translation = XMMatrixTranslation(0.0f, 10.0f, 0.0f);
+	cube1.Scale = XMMatrixScaling(500.0f, 10.0f, 500.0f);
 }
 
 void DrawScene()
@@ -436,9 +365,9 @@ void DrawScene()
 
 	//Set the World/View/Projection matrix, then send it to constant buffer in effect file
 	//Draw cube1
-	WVP = cube1.getTransformMatrix() * camera.getCamView() * camera.getCamProjection();
+	WVP = cube1.Scale * cube1.Translation * camera.getCamView() * camera.getCamProjection();
 
-	_cbPerObj.World = XMMatrixTranspose(cube1.getTransformMatrix());
+	_cbPerObj.World = XMMatrixTranspose(cube1.Scale * cube1.Translation);
 	_cbPerObj.WVP = XMMatrixTranspose(WVP);
 
 	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
@@ -449,23 +378,8 @@ void DrawScene()
 	objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &(objects_pool->CubesTexture));
 	objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &(objects_pool->CubesTexSamplerState));
 
-	objects_pool->d3d11DevCon->DrawIndexed(36, 0, 0);
-
-	//Draw cube2
-	WVP = cube2.getTransformMatrix() * camera.getCamView() * camera.getCamProjection();
-
-	_cbPerObj.World = XMMatrixTranspose(cube2.getTransformMatrix());
-	_cbPerObj.WVP = XMMatrixTranspose(WVP);
-
-	objects_pool->d3d11DevCon->UpdateSubresource((objects_pool->cbPerObjectBuffer), 0, NULL, &_cbPerObj, 0, 0);
-
-	objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &(objects_pool->cbPerObjectBuffer));
-
-	//Set texture for cube2
-	objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &(objects_pool->CubesTexture));
-	objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &(objects_pool->CubesTexSamplerState));
-
-	objects_pool->d3d11DevCon->DrawIndexed(36, 0, 0);
+	objects_pool->d3d11DevCon->RSSetState(objects_pool->CCWcullMode);
+	objects_pool->d3d11DevCon->DrawIndexed(6, 0, 0);
 
 	RenderText(L"FPS: ", fps);
 

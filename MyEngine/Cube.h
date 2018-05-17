@@ -6,7 +6,11 @@
 class Cube
 {
 public:
-	Cube() {}
+	Cube() {
+		Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+		Rotation = XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),0.0f);
+		Scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	}
 	Cube(XMMATRIX t,
 		XMMATRIX r,
 		XMMATRIX s)
@@ -15,10 +19,10 @@ public:
 		Scale(s)
 	{}
 
-	XMMATRIX getTransformMatrix()
+	/*XMMATRIX getTransformMatrix()
 	{
 		return Translation * Rotation * Scale;
-	}
+	}*/
 
 	XMMATRIX Translation;
 	XMMATRIX Rotation;

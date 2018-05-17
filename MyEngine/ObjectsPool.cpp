@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Config.h"
 #include "ObjectsPool.h"
 
 ObjectsPool* ObjectsPool::instance = new ObjectsPool();
@@ -15,6 +16,10 @@ ObjectsPool::ObjectsPool()
 
 void ObjectsPool::clean()
 {
+	//Quit full screen
+	SwapChain->SetFullscreenState(false, NULL);
+	PostMessage(hwnd, WM_DESTROY, 0, 0);
+
 	SwapChain->Release();
 	d3d11Device->Release();
 	d3d11DevCon->Release();
