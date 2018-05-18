@@ -9,6 +9,7 @@
 #include "FPSPrinter.h"
 #include "Light.h"
 #include "MouseAndKeyboard.h"
+#include "Sphere.h"
 
 ObjectsPool* objects_pool;
 
@@ -89,7 +90,7 @@ bool InitializeDirect3d11App(HINSTANCE hInstance)
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = 1;
 	swapChainDesc.OutputWindow = hwnd;
-	swapChainDesc.Windowed = false;
+	swapChainDesc.Windowed = true;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 	IDXGIFactory1 *DXGIFactory;
@@ -159,10 +160,16 @@ bool InitScene()
 	//Init FPS Printer
 	InitD2DScreenTexture();
 
+	//Create sky sphere
+	CreateSphere(10, 10);
+
 	//Shader process
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "VS", "vs_4_0", 0, 0, 0, &(objects_pool->VS_Buffer), 0, 0);
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "PS", "ps_4_0", 0, 0, 0, &(objects_pool->PS_Buffer), 0, 0);
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "D2D_PS", "ps_4_0", 0, 0, 0, &(objects_pool->D2D_PS_Buffer), 0, 0);
+	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "SKYMAP_VS", "vs_4_0", 0, 0, 0, &(objects_pool->SKYMAP_VS_Buffer), 0, 0);
+	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "SKYMAP_PS", "ps_4_0", 0, 0, 0, &(objects_pool->SKYMAP_PS_Buffer), 0, 0);
+
 
 	objects_pool->d3d11Device->CreateVertexShader(objects_pool->VS_Buffer->GetBufferPointer(), 
 		objects_pool->VS_Buffer->GetBufferSize(), NULL, &(objects_pool->VS));
@@ -170,6 +177,10 @@ bool InitScene()
 		objects_pool->PS_Buffer->GetBufferSize(), NULL, &(objects_pool->PS));
 	objects_pool->d3d11Device->CreatePixelShader(objects_pool->D2D_PS_Buffer->GetBufferPointer(),
 		objects_pool->D2D_PS_Buffer->GetBufferSize(), NULL, &(objects_pool->D2D_PS));
+	objects_pool->d3d11Device->CreateVertexShader(objects_pool->SKYMAP_VS_Buffer->GetBufferPointer(),
+		objects_pool->SKYMAP_VS_Buffer->GetBufferSize(), NULL, &(objects_pool->SKYMAP_VS));
+	objects_pool->d3d11Device->CreatePixelShader(objects_pool->SKYMAP_PS_Buffer->GetBufferPointer(),
+		objects_pool->SKYMAP_PS_Buffer->GetBufferSize(), NULL, &(objects_pool->SKYMAP_PS));
 
 	objects_pool->d3d11DevCon->VSSetShader(objects_pool->VS, 0, 0);
 	objects_pool->d3d11DevCon->PSSetShader(objects_pool->PS, 0, 0);
@@ -274,6 +285,30 @@ bool InitScene()
 
 	D3DX11CreateShaderResourceViewFromFile(objects_pool->d3d11Device, L"grass.jpg", NULL, NULL, &(objects_pool->CubesTexture), NULL );
 
+	//Create sky box shader
+	//Tell D3D we will be loading a cube texture
+	D3DX11_IMAGE_LOAD_INFO loadSMInfo;
+	loadSMInfo.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+	//Load the texture
+	ID3D11Texture2D* SMTexture = 0;
+	D3DX11CreateTextureFromFile(objects_pool->d3d11Device, L"skymap.dds",
+		&loadSMInfo, 0, (ID3D11Resource**)&SMTexture, 0);
+
+	//Create the sky box textures description
+	D3D11_TEXTURE2D_DESC SMTextureDesc;
+	SMTexture->GetDesc(&SMTextureDesc);
+
+	//Tell D3D We have a cube texture, which is an array of 2D textures
+	D3D11_SHADER_RESOURCE_VIEW_DESC SMViewDesc;
+	SMViewDesc.Format = SMTextureDesc.Format;
+	SMViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+	SMViewDesc.TextureCube.MipLevels = SMTextureDesc.MipLevels;
+	SMViewDesc.TextureCube.MostDetailedMip = 0;
+
+	//Create the Resource view for sky box
+	objects_pool->d3d11Device->CreateShaderResourceView(SMTexture, &SMViewDesc, &(objects_pool->smrv));
+
 	//Create blend description
 	D3D11_BLEND_DESC blendDesc;
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
@@ -322,6 +357,19 @@ bool InitScene()
 
 	objects_pool->d3d11Device->CreateRasterizerState(&cmdesc, &(objects_pool->CWcullMode));
 
+	//Create rasterize state for sky box
+	cmdesc.CullMode = D3D11_CULL_NONE;
+	objects_pool->d3d11Device->CreateRasterizerState(&cmdesc, &(objects_pool->RSCullNone));
+
+	//Create depth stencil state for sky box
+	D3D11_DEPTH_STENCIL_DESC dssDesc;
+	ZeroMemory(&dssDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+	dssDesc.DepthEnable = true;
+	dssDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dssDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+	objects_pool->d3d11Device->CreateDepthStencilState(&dssDesc, &(objects_pool->DSLessEqual));
+
 	return true;
 }
 
@@ -332,6 +380,18 @@ void UpdateScene(double time)
 	//Define cube1's world space matrix
 	cube1.Translation = XMMatrixTranslation(0.0f, 10.0f, 0.0f);
 	cube1.Scale = XMMatrixScaling(500.0f, 10.0f, 500.0f);
+
+	//Reset sphereWorld
+	sphereWorld = XMMatrixIdentity();
+
+	//Define sphereWorld's world space matrix
+	XMMATRIX Scale = XMMatrixScaling(5.0f, 5.0f, 5.0f);
+	//Make sure the sphere is always centered around camera
+	XMMATRIX Translation = XMMatrixTranslation(XMVectorGetX(camera.camPosition), 
+		XMVectorGetY(camera.camPosition), 
+		XMVectorGetZ(camera.camPosition));
+	//Set sphereWorld's world space using the transformations
+	sphereWorld = Scale * Translation;
 }
 
 void DrawScene()
@@ -358,6 +418,7 @@ void DrawScene()
 
 	//Set the cubes index buffer
 	objects_pool->d3d11DevCon->IASetIndexBuffer(objects_pool->squareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
 	//Set the cubes vertex buffer
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -380,6 +441,34 @@ void DrawScene()
 
 	objects_pool->d3d11DevCon->RSSetState(objects_pool->CCWcullMode);
 	objects_pool->d3d11DevCon->DrawIndexed(6, 0, 0);
+
+	//Draw sky box
+	//Set the spheres index buffer
+	objects_pool->d3d11DevCon->IASetIndexBuffer(objects_pool->sphereIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	//Set the spheres vertex buffer
+	objects_pool->d3d11DevCon->IASetVertexBuffers(0, 1, &(objects_pool->sphereVertBuffer), &stride, &offset);
+
+	//Set the WVP matrix and send it to the constant buffer in effect file
+	WVP = sphereWorld * camera.getCamView() * camera.getCamProjection();
+	_cbPerObj.WVP = XMMatrixTranspose(WVP);
+	_cbPerObj.World = XMMatrixTranspose(sphereWorld);
+	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
+	objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &(objects_pool->cbPerObjectBuffer));
+	//Send our skymap resource view to pixel shader
+	objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &(objects_pool->smrv));
+	objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &(objects_pool->CubesTexSamplerState));
+
+	//Set the new VS and PS shaders
+	objects_pool->d3d11DevCon->VSSetShader(objects_pool->SKYMAP_VS, 0, 0);
+	objects_pool->d3d11DevCon->PSSetShader(objects_pool->SKYMAP_PS, 0, 0);
+	//Set the new depth/stencil and RS states
+	objects_pool->d3d11DevCon->OMSetDepthStencilState(objects_pool->DSLessEqual, 0);
+	objects_pool->d3d11DevCon->RSSetState(objects_pool->RSCullNone);
+	objects_pool->d3d11DevCon->DrawIndexed(NumSphereFaces * 3, 0, 0);
+
+	//Set the default VS shader and depth/stencil state
+	objects_pool->d3d11DevCon->VSSetShader(objects_pool->VS, 0, 0);
+	objects_pool->d3d11DevCon->OMSetDepthStencilState(NULL, 0);
 
 	RenderText(L"FPS: ", fps);
 

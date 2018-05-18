@@ -55,4 +55,18 @@ void ObjectsPool::clean()
 	DIKeyboard->Unacquire();
 	DIMouse->Unacquire();
 	DirectInput->Release();
+
+	//Clean sky box objects
+	sphereIndexBuffer->Release();
+	sphereVertBuffer->Release();
+
+	SKYMAP_VS->Release();
+	SKYMAP_PS->Release();
+	SKYMAP_VS_Buffer->Release();
+	SKYMAP_PS_Buffer->Release();
+
+	smrv->Release();
+
+	DSLessEqual->Release();
+	RSCullNone->Release();
 }

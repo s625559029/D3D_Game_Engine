@@ -20,3 +20,4 @@
 #include <sstream>
 #include <dwrite.h>
 #include <dinput.h>
+#include <vector>
