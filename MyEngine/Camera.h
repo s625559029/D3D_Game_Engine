@@ -1,7 +1,8 @@
 #ifndef _CAMERA_
-#define _CAMERA
+#define _CAMERA_
 
 #include "D3DHeader.h"
+#include "Config.h"
 
 class Camera
 {

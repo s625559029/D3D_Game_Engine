@@ -27,7 +27,7 @@ struct VS_OUTPUT
     float3 normal : NORMAL;
 };
 
-struct SKYMAP_VS_OUTPUT
+struct SKYMAP_VS_OUTPUT    //output structure for skymap vertex shader
 {
     float4 Pos : SV_POSITION;
     float3 texCoord : TEXCOORD;
@@ -68,11 +68,11 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 
     finalColor = diffuse * light.ambient;
     finalColor += saturate(dot(light.dir, input.normal) * light.diffuse * diffuse);
-    
+
     return float4(finalColor, diffuse.a);
 }
 
-float4 SKYMAP_PS(SKYMAP_VS_OUTPUT input) : SV_TARGET
+float4 SKYMAP_PS(SKYMAP_VS_OUTPUT input) : SV_Target
 {
     return SkyMap.Sample(ObjSamplerState, input.texCoord);
 }
@@ -80,6 +80,6 @@ float4 SKYMAP_PS(SKYMAP_VS_OUTPUT input) : SV_TARGET
 float4 D2D_PS(VS_OUTPUT input) : SV_TARGET
 {
     float4 diffuse = ObjTexture.Sample( ObjSamplerState, input.TexCoord );
-    
+
     return diffuse;
 }

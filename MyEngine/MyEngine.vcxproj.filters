@@ -66,6 +66,15 @@
     <ClInclude Include="Sphere.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Skybox.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cbPerObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cbPerFrame.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -90,6 +99,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="FPSCamera.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Sphere.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyBox.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

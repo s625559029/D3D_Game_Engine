@@ -149,6 +149,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="cbPerFrame.h" />
+    <ClInclude Include="cbPerObject.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="D3DHeader.h" />
@@ -159,6 +161,7 @@
     <ClInclude Include="MyD3D.h" />
     <ClInclude Include="MyEngine.h" />
     <ClInclude Include="ObjectsPool.h" />
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -172,6 +175,8 @@
     <ClCompile Include="MyD3D.cpp" />
     <ClCompile Include="MyEngine.cpp" />
     <ClCompile Include="ObjectsPool.cpp" />
+    <ClCompile Include="SkyBox.cpp" />
+    <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
