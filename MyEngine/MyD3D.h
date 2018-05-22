@@ -6,5 +6,6 @@ void ReleaseObjects();
 bool InitScene();
 void UpdateScene(double time);
 void DrawScene();
+void CreateLight();
 
 #endif // !_MYD3D_

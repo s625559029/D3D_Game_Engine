@@ -30,6 +30,7 @@ public:
 	ID3D11BlendState* Transparency;
 	ID3D11RasterizerState* CCWcullMode;
 	ID3D11RasterizerState* CWcullMode;
+	ID3D11RasterizerState* RSCullNone;
 
 	//FPS Printer objects
 	ID3D10Device1 *d3d101Device;

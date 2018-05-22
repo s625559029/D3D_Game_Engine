@@ -12,6 +12,7 @@
 #include "cbPerFrame.h"
 #include "cbPerObject.h"
 #include "Skybox.h"
+#include "Mesh.h"
 
 ObjectsPool* objects_pool;
 
@@ -44,6 +45,8 @@ Light light;
 
 //Declare sky box
 SkyBox sky_box;
+
+Mesh mesh;
 
 //Declare input layout
 D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -146,13 +149,16 @@ bool InitializeDirect3d11App(HINSTANCE hInstance)
 void ReleaseObjects()
 {
 	objects_pool->clean();
-	sky_box.cleanSkyBox();
+	sky_box.CleanSkyBox();
 }
 
 bool InitScene()
 {
 	//Init FPS Printer
 	InitD2DScreenTexture();
+
+	if (!mesh.LoadObjModel(L"spaceCompound.obj", true, false))
+		return false;
 
 	//Shader process
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "VS", "vs_4_0", 0, 0, 0, &(objects_pool->VS_Buffer), 0, 0);
@@ -169,10 +175,7 @@ bool InitScene()
 	objects_pool->d3d11DevCon->VSSetShader(objects_pool->VS, 0, 0);
 	objects_pool->d3d11DevCon->PSSetShader(objects_pool->PS, 0, 0);
 
-	//Create the light
-	light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	CreateLight();
 
 	//Create the ground
 	Vertex v[] =
@@ -317,6 +320,12 @@ bool InitScene()
 
 	objects_pool->d3d11Device->CreateRasterizerState(&cmdesc, &(objects_pool->CWcullMode));
 
+	//Create rasterize state for sky box
+	ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+	cmdesc.FillMode = D3D11_FILL_SOLID;
+	cmdesc.CullMode = D3D11_CULL_NONE;
+	objects_pool->d3d11Device->CreateRasterizerState(&cmdesc, &(objects_pool->RSCullNone));
+
 	//Create sky box
 	sky_box.CreateSkyBox();
 
@@ -332,6 +341,7 @@ void UpdateScene(double time)
 	cube1.Scale = XMMatrixScaling(500.0f, 10.0f, 500.0f);
 
 	sky_box.UpdateSkyBox(camera);
+	mesh.Update();
 }
 
 void DrawScene()
@@ -380,11 +390,87 @@ void DrawScene()
 	objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &(objects_pool->CubesTexSamplerState));
 
 	objects_pool->d3d11DevCon->RSSetState(objects_pool->CCWcullMode);
-	objects_pool->d3d11DevCon->DrawIndexed(6, 0, 0);
+	//objects_pool->d3d11DevCon->DrawIndexed(6, 0, 0);
+
+	
 
 	sky_box.DrawSkyBox(camera, _cbPerObj);
 
-	RenderText(L"FPS: ", fps);
+	//Draw our model's NON-transparent subsets
+	/*for (int i = 0; i < mesh.meshSubsets; ++i)
+	{
+		//Set the grounds index buffer
+		objects_pool->d3d11DevCon->IASetIndexBuffer(mesh.meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
+		//Set the grounds vertex buffer
+		objects_pool->d3d11DevCon->IASetVertexBuffers(0, 1, &mesh.meshVertBuff, &stride, &offset);
+
+		//Set the WVP matrix and send it to the constant buffer in effect file
+		WVP = mesh.meshWorld * camera.getCamView() * camera.getCamProjection();
+		_cbPerObj.WVP = XMMatrixTranspose(WVP);
+		_cbPerObj.World = XMMatrixTranspose(mesh.meshWorld);
+		_cbPerObj.difColor = mesh.material[mesh.meshSubsetTexture[i]].difColor;
+		_cbPerObj.hasTexture = mesh.material[mesh.meshSubsetTexture[i]].hasTexture;
+		_cbPerObj.hasTexture = false;
+
+		objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
+		objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &objects_pool->cbPerObjectBuffer);
+		objects_pool->d3d11DevCon->PSSetConstantBuffers(1, 1, &objects_pool->cbPerObjectBuffer);
+		if (mesh.material[mesh.meshSubsetTexture[i]].hasTexture)
+			objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &mesh.meshSRV[mesh.material[mesh.meshSubsetTexture[i]].texArrayIndex]);
+		objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &objects_pool->CubesTexSamplerState);
+
+		objects_pool->d3d11DevCon->RSSetState(objects_pool->RSCullNone);
+		int indexStart = mesh.meshSubsetIndexStart[i];
+		int indexDrawAmount = mesh.meshSubsetIndexStart[i + 1] - mesh.meshSubsetIndexStart[i];
+		if (!mesh.material[mesh.meshSubsetTexture[i]].transparent)
+			objects_pool->d3d11DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+	}
+
+	//Draw our model's TRANSPARENT subsets now
+
+	//Set our blend state
+	objects_pool->d3d11DevCon->OMSetBlendState(mesh.Transparency, NULL, 0xffffffff);
+
+	for (int i = 0; i < mesh.meshSubsets; ++i)
+	{
+		//Set the grounds index buffer
+		objects_pool->d3d11DevCon->IASetIndexBuffer(mesh.meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
+		//Set the grounds vertex buffer
+		objects_pool->d3d11DevCon->IASetVertexBuffers(0, 1, &mesh.meshVertBuff, &stride, &offset);
+
+		//Set the WVP matrix and send it to the constant buffer in effect file
+		WVP = mesh.meshWorld * camera.getCamView() * camera.getCamProjection();
+		_cbPerObj.WVP = XMMatrixTranspose(WVP);
+		_cbPerObj.World = XMMatrixTranspose(mesh.meshWorld);
+		_cbPerObj.difColor = mesh.material[mesh.meshSubsetTexture[i]].difColor;
+		_cbPerObj.hasTexture = mesh.material[mesh.meshSubsetTexture[i]].hasTexture;
+		objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
+		objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &objects_pool->cbPerObjectBuffer);
+		objects_pool->d3d11DevCon->PSSetConstantBuffers(1, 1, &objects_pool->cbPerObjectBuffer);
+		if (mesh.material[mesh.meshSubsetTexture[i]].hasTexture)
+			objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &mesh.meshSRV[mesh.material[mesh.meshSubsetTexture[i]].texArrayIndex]);
+		objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &objects_pool->CubesTexSamplerState);
+
+		objects_pool->d3d11DevCon->RSSetState(objects_pool->RSCullNone);
+		int indexStart = mesh.meshSubsetIndexStart[i];
+		int indexDrawAmount = mesh.meshSubsetIndexStart[i + 1] - mesh.meshSubsetIndexStart[i];
+		if (mesh.material[mesh.meshSubsetTexture[i]].transparent)
+			objects_pool->d3d11DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+	}*/
+
+
+	mesh.Draw(camera, _cbPerObj);
+
+	RenderText(L"FPS: ", mesh.material[mesh.meshSubsetTexture[0]].transparent);
 
 	objects_pool->SwapChain->Present(0, 0);
+}
+
+void CreateLight()
+{
+	//Create the light
+	light = Light();
+	light.dir = XMFLOAT3(0.0f, 1.0f, -1.0f);
+	light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 }

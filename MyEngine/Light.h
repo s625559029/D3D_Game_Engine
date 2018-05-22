@@ -3,12 +3,14 @@
 
 #include "D3DHeader.h"
 
-struct Light
+class Light
 {
+public:
 	Light()
 	{
-		ZeroMemory(this, sizeof(Light));
+		
 	}
+
 	XMFLOAT3 dir;
 	float pad;
 	XMFLOAT4 ambient;

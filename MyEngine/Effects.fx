@@ -14,6 +14,9 @@ cbuffer cbPerObject
 {
     float4x4 WVP;
     float4x4 World;
+
+    float4 difColor;
+    bool hasTexture;
 };
 
 Texture2D ObjTexture;
@@ -62,9 +65,12 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     input.normal = normalize(input.normal);
 
-    float4 diffuse = ObjTexture.Sample( ObjSamplerState, input.TexCoord );
+    float4 diffuse = difColor;
 
-    float3 finalColor;
+    if(hasTexture)
+        diffuse = ObjTexture.Sample( ObjSamplerState, input.TexCoord );
+
+    float3 finalColor = float3(0.0f, 0.0f, 0.0f);
 
     finalColor = diffuse * light.ambient;
     finalColor += saturate(dot(light.dir, input.normal) * light.diffuse * diffuse);

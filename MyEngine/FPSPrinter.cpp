@@ -3,12 +3,7 @@
 #include "Vertex.h"
 #include "Config.h"
 #include "ObjectsPool.h"
-
-struct cbPerObject
-{
-	XMMATRIX WVP;
-	XMMATRIX World;
-};
+#include "cbPerObject.h"
 
 bool InitD2D_D3D101_DWrite(IDXGIAdapter1 *Adapter)
 {

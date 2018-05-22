@@ -157,13 +157,17 @@
     <ClInclude Include="FPSCamera.h" />
     <ClInclude Include="FPSPrinter.h" />
     <ClInclude Include="Light.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="MouseAndKeyboard.h" />
     <ClInclude Include="MyD3D.h" />
     <ClInclude Include="MyEngine.h" />
     <ClInclude Include="ObjectsPool.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="SpotLight.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="SurfaceMaterial.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Vertex.h" />
@@ -171,6 +175,7 @@
   <ItemGroup>
     <ClCompile Include="FPSCamera.cpp" />
     <ClCompile Include="FPSPrinter.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MouseAndKeyboard.cpp" />
     <ClCompile Include="MyD3D.cpp" />
     <ClCompile Include="MyEngine.cpp" />

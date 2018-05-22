@@ -14,7 +14,7 @@ public:
 
 	void DrawSkyBox(Camera & camera, cbPerObject & _cbPerObj);
 
-	void cleanSkyBox();
+	void CleanSkyBox();
 
 	//Sky box objects
 	ID3D11VertexShader* SKYMAP_VS;
@@ -25,7 +25,6 @@ public:
 	ID3D11ShaderResourceView* smrv;
 
 	ID3D11DepthStencilState* DSLessEqual;
-	ID3D11RasterizerState* RSCullNone;
 
 	Sphere sphere;
 };

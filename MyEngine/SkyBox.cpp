@@ -47,14 +47,6 @@ void SkyBox::CreateSkyBox()
 	//Create the Resource view for sky box
 	objects_pool->d3d11Device->CreateShaderResourceView(SMTexture, &SMViewDesc, &smrv);
 
-	//Create rasterize state for sky box
-	D3D11_RASTERIZER_DESC cmdesc;
-
-	ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
-	cmdesc.FillMode = D3D11_FILL_SOLID;
-	cmdesc.CullMode = D3D11_CULL_NONE;
-	objects_pool->d3d11Device->CreateRasterizerState(&cmdesc, &(RSCullNone));
-
 	//Create depth stencil state for sky box
 	D3D11_DEPTH_STENCIL_DESC dssDesc;
 	ZeroMemory(&dssDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
@@ -97,6 +89,7 @@ void SkyBox::DrawSkyBox(Camera & camera, cbPerObject & _cbPerObj)
 	WVP = sphere.sphereWorld * camera.getCamView() * camera.getCamProjection();
 	_cbPerObj.WVP = XMMatrixTranspose(WVP);
 	_cbPerObj.World = XMMatrixTranspose(sphere.sphereWorld);
+
 	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
 	objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &(objects_pool->cbPerObjectBuffer));
 	//Send our skymap resource view to pixel shader
@@ -108,7 +101,7 @@ void SkyBox::DrawSkyBox(Camera & camera, cbPerObject & _cbPerObj)
 	objects_pool->d3d11DevCon->PSSetShader(SKYMAP_PS, 0, 0);
 	//Set the new depth/stencil and RS states
 	objects_pool->d3d11DevCon->OMSetDepthStencilState(DSLessEqual, 0);
-	objects_pool->d3d11DevCon->RSSetState(RSCullNone);
+	objects_pool->d3d11DevCon->RSSetState(objects_pool->RSCullNone);
 	objects_pool->d3d11DevCon->DrawIndexed(sphere.NumSphereFaces * 3, 0, 0);
 	
 	//Set the default VS shader and depth/stencil state
@@ -117,7 +110,7 @@ void SkyBox::DrawSkyBox(Camera & camera, cbPerObject & _cbPerObj)
 	objects_pool->d3d11DevCon->OMSetDepthStencilState(NULL, 0);
 }
 
-void SkyBox::cleanSkyBox()
+void SkyBox::CleanSkyBox()
 {
 	//Clean sky box objects
 	sphere.cleanSphere();
@@ -130,5 +123,4 @@ void SkyBox::cleanSkyBox()
 	smrv->Release();
 
 	DSLessEqual->Release();
-	RSCullNone->Release();
 }

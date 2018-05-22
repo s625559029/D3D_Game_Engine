@@ -36,7 +36,13 @@ void ObjectsPool::clean()
 	depthStencilBuffer->Release();
 	cbPerObjectBuffer->Release();
 
-	//Clean PFS Printer objects
+	//Clean blend state
+	Transparency->Release();
+	CCWcullMode->Release();
+	CWcullMode->Release();
+	RSCullNone->Release();
+
+	//Clean FPS Printer objects
 	d3d101Device->Release();
 	keyedMutex11->Release();
 	keyedMutex10->Release();
