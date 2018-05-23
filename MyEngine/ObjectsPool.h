@@ -13,8 +13,6 @@ public:
 	ID3D11Device* d3d11Device;
 	ID3D11DeviceContext* d3d11DevCon;
 	ID3D11RenderTargetView* renderTargetView;
-	ID3D11Buffer* squareIndexBuffer;
-	ID3D11Buffer* squareVertBuffer;
 	ID3D11DepthStencilView* depthStencilView;
 	ID3D11Texture2D* depthStencilBuffer;
 	ID3D11VertexShader* VS;

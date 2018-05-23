@@ -1,4 +1,4 @@
-﻿  Mesh.cpp
+﻿  MyD3D.cpp
 c:\users\sun\vs_projects\myengine\myengine\stdafx.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
 c:\users\sun\vs_projects\myengine\myengine\targetver.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
 d:\program files (x86)\microsoft directx sdk (june 2010)\include\dxgitype.h(12): warning C4005: “DXGI_STATUS_OCCLUDED”: 宏重定义
@@ -168,10 +168,5 @@ d:\program files (x86)\microsoft directx sdk (june 2010)\include\dwrite.h(4988):
 d:\program files (x86)\microsoft directx sdk (june 2010)\include\dwrite.h(4993): warning C4005: “DWRITE_E_ALREADYREGISTERED”: 宏重定义
   d:\program files (x86)\windows kits\8.1\include\shared\winerror.h(50975): note: 参见“DWRITE_E_ALREADYREGISTERED”的前一个定义
   d:\program files (x86)\microsoft directx sdk (june 2010)\include\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
-c:\users\sun\vs_projects\myengine\myengine\mesh.cpp(149): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\sun\vs_projects\myengine\myengine\mesh.cpp(280): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\sun\vs_projects\myengine\myengine\mesh.cpp(589): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\sun\vs_projects\myengine\myengine\mesh.cpp(688): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\sun\vs_projects\myengine\myengine\mesh.cpp(778): warning C4244: “参数”: 从“int”转换到“FLOAT”，可能丢失数据
   MyEngine.vcxproj -> C:\Users\Sun\vs_projects\MyEngine\Debug\MyEngine.exe
   MyEngine.vcxproj -> C:\Users\Sun\vs_projects\MyEngine\Debug\MyEngine.pdb (Partial PDB)

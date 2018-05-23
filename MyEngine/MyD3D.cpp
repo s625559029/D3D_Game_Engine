@@ -53,7 +53,8 @@ D3D11_INPUT_ELEMENT_DESC layout[] =
 {
 	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0}
 };
 
 UINT numElements = ARRAYSIZE(layout);
@@ -118,9 +119,6 @@ bool InitializeDirect3d11App(HINSTANCE hInstance)
 	objects_pool->d3d11Device->CreateRenderTargetView(BackBuffer, NULL, &(objects_pool->renderTargetView));
 	BackBuffer->Release();
 
-	//Set our Render Target
-	objects_pool->d3d11DevCon->OMSetRenderTargets(1, &(objects_pool->renderTargetView), NULL);
-
 	//Describe our Depth/Stencil Buffer
 	D3D11_TEXTURE2D_DESC depthStencilDesc;
 
@@ -157,7 +155,7 @@ bool InitScene()
 	//Init FPS Printer
 	InitD2DScreenTexture();
 
-	if (!mesh.LoadObjModel(L"spaceCompound.obj", true, false))
+	if (!mesh.LoadObjModel(L"ground.obj", true, false))
 		return false;
 
 	//Shader process
@@ -176,52 +174,6 @@ bool InitScene()
 	objects_pool->d3d11DevCon->PSSetShader(objects_pool->PS, 0, 0);
 
 	CreateLight();
-
-	//Create the ground
-	Vertex v[] =
-	{
-		// Bottom Face
-		Vertex(-1.0f, -1.0f, -1.0f, 100.0f, 100.0f, 0.0f, 1.0f, 0.0f),
-		Vertex(1.0f, -1.0f, -1.0f,   0.0f, 100.0f, 0.0f, 1.0f, 0.0f),
-		Vertex(1.0f, -1.0f,  1.0f,   0.0f,   0.0f, 0.0f, 1.0f, 0.0f),
-		Vertex(-1.0f, -1.0f,  1.0f, 100.0f,   0.0f, 0.0f, 1.0f, 0.0f),
-	};
-
-	DWORD indices[] = {
-		0,  1,  2,
-		0,  2,  3,
-	};
-
-	//Create index buffer
-	D3D11_BUFFER_DESC indexBufferDesc;
-	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
-
-	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexBufferDesc.ByteWidth = sizeof(DWORD) * 2 * 3;
-	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	indexBufferDesc.CPUAccessFlags = 0;
-	indexBufferDesc.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA indexBufferData;
-
-	indexBufferData.pSysMem = indices;
-	objects_pool->d3d11Device->CreateBuffer(&indexBufferDesc, &indexBufferData, &(objects_pool->squareIndexBuffer));
-
-	//Create vertex buffer
-	D3D11_BUFFER_DESC vertexBufferDesc;
-	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.ByteWidth = sizeof(Vertex) * 4;
-	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.CPUAccessFlags = 0;
-	vertexBufferDesc.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA vertexBufferData;
-
-	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-	vertexBufferData.pSysMem = v;
-	objects_pool->d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &(objects_pool->squareVertBuffer));
 
 	//Create input layout
 	objects_pool->d3d11Device->CreateInputLayout(layout, numElements, objects_pool->VS_Buffer->GetBufferPointer(),
@@ -291,6 +243,9 @@ bool InitScene()
 	blendDesc.AlphaToCoverageEnable = false;
 	blendDesc.RenderTarget[0] = rtbd;
 
+	//Create blend state
+	objects_pool->d3d11Device->CreateBlendState(&blendDesc, &(objects_pool->Transparency));
+
 	// Describe the Sample State
 	D3D11_SAMPLER_DESC sampDesc;
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
@@ -304,9 +259,6 @@ bool InitScene()
 
 	//Create the Sample State
 	objects_pool->d3d11Device->CreateSamplerState(&sampDesc, &(objects_pool->CubesTexSamplerState));
-
-	//Create blend state
-	objects_pool->d3d11Device->CreateBlendState(&blendDesc, &(objects_pool->Transparency));
 
 	D3D11_RASTERIZER_DESC cmdesc;
 
@@ -360,108 +312,17 @@ void DrawScene()
 	objects_pool->d3d11DevCon->VSSetShader(objects_pool->VS, 0, 0);
 	objects_pool->d3d11DevCon->PSSetShader(objects_pool->PS, 0, 0);
 
-	//Set our Render Target
-	objects_pool->d3d11DevCon->OMSetRenderTargets(1, &(objects_pool->renderTargetView), objects_pool->depthStencilView);
+	//Reset render targets
+	objects_pool->d3d11DevCon->OMSetRenderTargets(1, &objects_pool->renderTargetView, objects_pool->depthStencilView);
 
-	//Set the default blend state (no blending) for opaque objects
+	//Reset the default blend state (no blending)
 	objects_pool->d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
-
-	//Set the cubes index buffer
-	objects_pool->d3d11DevCon->IASetIndexBuffer(objects_pool->squareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	//Set the cubes vertex buffer
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	objects_pool->d3d11DevCon->IASetVertexBuffers(0, 1, &(objects_pool->squareVertBuffer), &stride, &offset);
-
-	//Set the World/View/Projection matrix, then send it to constant buffer in effect file
-	//Draw cube1
-	WVP = cube1.Scale * cube1.Translation * camera.getCamView() * camera.getCamProjection();
-
-	_cbPerObj.World = XMMatrixTranspose(cube1.Scale * cube1.Translation);
-	_cbPerObj.WVP = XMMatrixTranspose(WVP);
-
-	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
-
-	objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &(objects_pool->cbPerObjectBuffer));
-
-	//Set texture for cube1
-	objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &(objects_pool->CubesTexture));
-	objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &(objects_pool->CubesTexSamplerState));
-
-	objects_pool->d3d11DevCon->RSSetState(objects_pool->CCWcullMode);
-	//objects_pool->d3d11DevCon->DrawIndexed(6, 0, 0);
-
-	
 
 	sky_box.DrawSkyBox(camera, _cbPerObj);
 
-	//Draw our model's NON-transparent subsets
-	/*for (int i = 0; i < mesh.meshSubsets; ++i)
-	{
-		//Set the grounds index buffer
-		objects_pool->d3d11DevCon->IASetIndexBuffer(mesh.meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
-		//Set the grounds vertex buffer
-		objects_pool->d3d11DevCon->IASetVertexBuffers(0, 1, &mesh.meshVertBuff, &stride, &offset);
-
-		//Set the WVP matrix and send it to the constant buffer in effect file
-		WVP = mesh.meshWorld * camera.getCamView() * camera.getCamProjection();
-		_cbPerObj.WVP = XMMatrixTranspose(WVP);
-		_cbPerObj.World = XMMatrixTranspose(mesh.meshWorld);
-		_cbPerObj.difColor = mesh.material[mesh.meshSubsetTexture[i]].difColor;
-		_cbPerObj.hasTexture = mesh.material[mesh.meshSubsetTexture[i]].hasTexture;
-		_cbPerObj.hasTexture = false;
-
-		objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
-		objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &objects_pool->cbPerObjectBuffer);
-		objects_pool->d3d11DevCon->PSSetConstantBuffers(1, 1, &objects_pool->cbPerObjectBuffer);
-		if (mesh.material[mesh.meshSubsetTexture[i]].hasTexture)
-			objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &mesh.meshSRV[mesh.material[mesh.meshSubsetTexture[i]].texArrayIndex]);
-		objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &objects_pool->CubesTexSamplerState);
-
-		objects_pool->d3d11DevCon->RSSetState(objects_pool->RSCullNone);
-		int indexStart = mesh.meshSubsetIndexStart[i];
-		int indexDrawAmount = mesh.meshSubsetIndexStart[i + 1] - mesh.meshSubsetIndexStart[i];
-		if (!mesh.material[mesh.meshSubsetTexture[i]].transparent)
-			objects_pool->d3d11DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
-	}
-
-	//Draw our model's TRANSPARENT subsets now
-
-	//Set our blend state
-	objects_pool->d3d11DevCon->OMSetBlendState(mesh.Transparency, NULL, 0xffffffff);
-
-	for (int i = 0; i < mesh.meshSubsets; ++i)
-	{
-		//Set the grounds index buffer
-		objects_pool->d3d11DevCon->IASetIndexBuffer(mesh.meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
-		//Set the grounds vertex buffer
-		objects_pool->d3d11DevCon->IASetVertexBuffers(0, 1, &mesh.meshVertBuff, &stride, &offset);
-
-		//Set the WVP matrix and send it to the constant buffer in effect file
-		WVP = mesh.meshWorld * camera.getCamView() * camera.getCamProjection();
-		_cbPerObj.WVP = XMMatrixTranspose(WVP);
-		_cbPerObj.World = XMMatrixTranspose(mesh.meshWorld);
-		_cbPerObj.difColor = mesh.material[mesh.meshSubsetTexture[i]].difColor;
-		_cbPerObj.hasTexture = mesh.material[mesh.meshSubsetTexture[i]].hasTexture;
-		objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
-		objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &objects_pool->cbPerObjectBuffer);
-		objects_pool->d3d11DevCon->PSSetConstantBuffers(1, 1, &objects_pool->cbPerObjectBuffer);
-		if (mesh.material[mesh.meshSubsetTexture[i]].hasTexture)
-			objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &mesh.meshSRV[mesh.material[mesh.meshSubsetTexture[i]].texArrayIndex]);
-		objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &objects_pool->CubesTexSamplerState);
-
-		objects_pool->d3d11DevCon->RSSetState(objects_pool->RSCullNone);
-		int indexStart = mesh.meshSubsetIndexStart[i];
-		int indexDrawAmount = mesh.meshSubsetIndexStart[i + 1] - mesh.meshSubsetIndexStart[i];
-		if (mesh.material[mesh.meshSubsetTexture[i]].transparent)
-			objects_pool->d3d11DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
-	}*/
-
-
 	mesh.Draw(camera, _cbPerObj);
 
-	RenderText(L"FPS: ", mesh.material[mesh.meshSubsetTexture[0]].transparent);
+	RenderText(L"FPS: ", fps);
 
 	objects_pool->SwapChain->Present(0, 0);
 }

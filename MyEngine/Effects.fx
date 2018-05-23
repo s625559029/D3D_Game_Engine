@@ -17,34 +17,39 @@ cbuffer cbPerObject
 
     float4 difColor;
     bool hasTexture;
+    bool hasNormMap;
 };
 
 Texture2D ObjTexture;
+Texture2D ObjNormMap;
 SamplerState ObjSamplerState;
 TextureCube SkyMap;
 
 struct VS_OUTPUT
 {
-    float4 Pos : SV_POSITION;
-    float2 TexCoord : TEXCOORD;
+    float4 pos : SV_POSITION;
+    float2 texCoord : TEXCOORD;
     float3 normal : NORMAL;
+    float3 tangent : TANGENT;
 };
 
 struct SKYMAP_VS_OUTPUT    //output structure for skymap vertex shader
 {
-    float4 Pos : SV_POSITION;
+    float4 pos : SV_POSITION;
     float3 texCoord : TEXCOORD;
 };
 
-VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL)
+VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL, float3 tangent : TANGENT)
 {
     VS_OUTPUT output;
 
-    output.Pos = mul(inPos, WVP);
+    output.pos = mul(inPos, WVP);
 
     output.normal = mul(normal, World);
 
-    output.TexCoord = inTexCoord;
+    output.tangent = mul(tangent, World);
+
+    output.texCoord = inTexCoord;
 
     return output;
 }
@@ -54,7 +59,7 @@ SKYMAP_VS_OUTPUT SKYMAP_VS(float3 inPos : POSITION, float2 inTexCoord : TEXCOORD
     SKYMAP_VS_OUTPUT output = (SKYMAP_VS_OUTPUT)0;
 
     //Set Pos to xyww instead of xyzw, so that z will always be 1 (furthest from camera)
-    output.Pos = mul(float4(inPos, 1.0f), WVP).xyww;
+    output.pos = mul(float4(inPos, 1.0f), WVP).xyww;
 
     output.texCoord = inPos;
 
@@ -68,9 +73,30 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     float4 diffuse = difColor;
 
     if(hasTexture)
-        diffuse = ObjTexture.Sample( ObjSamplerState, input.TexCoord );
+        diffuse = ObjTexture.Sample( ObjSamplerState, input.texCoord );
 
-    float3 finalColor = float3(0.0f, 0.0f, 0.0f);
+    if(hasNormMap == true)
+    {
+        //Load normal from normal map
+        float4 normalMap = ObjNormMap.Sample( ObjSamplerState, input.texCoord );
+
+        //Change normal map range from [0, 1] to [-1, 1]
+        normalMap = (2.0f*normalMap) - 1.0f;
+
+        //Make sure tangent is completely orthogonal to normal
+        input.tangent = normalize(input.tangent - dot(input.tangent, input.normal)*input.normal);
+
+        //Create the biTangent
+        float3 biTangent = cross(input.normal, input.tangent);
+
+        //Create the "Texture Space"
+        float3x3 texSpace = float3x3(input.tangent, biTangent, input.normal);
+
+        //Convert normal from normal map to texture space and store in input.normal
+        input.normal = normalize(mul(normalMap, texSpace));
+    }
+
+    float3 finalColor;
 
     finalColor = diffuse * light.ambient;
     finalColor += saturate(dot(light.dir, input.normal) * light.diffuse * diffuse);
@@ -85,7 +111,7 @@ float4 SKYMAP_PS(SKYMAP_VS_OUTPUT input) : SV_Target
 
 float4 D2D_PS(VS_OUTPUT input) : SV_TARGET
 {
-    float4 diffuse = ObjTexture.Sample( ObjSamplerState, input.TexCoord );
+    float4 diffuse = ObjTexture.Sample( ObjSamplerState, input.texCoord );
 
     return diffuse;
 }

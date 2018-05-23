@@ -6,6 +6,8 @@ struct SurfaceMaterial
 	std::wstring matName;
 	XMFLOAT4 difColor;
 	int texArrayIndex;
+	int normMapTexArrayIndex;
+	bool hasNormMap;
 	bool hasTexture;
 	bool transparent;
 };

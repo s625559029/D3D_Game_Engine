@@ -10,7 +10,9 @@ struct cbPerObject
 	XMMATRIX World;
 
 	XMFLOAT4 difColor;
-	bool hasTexture = false;
+	BOOL hasTexture;
+
+	BOOL hasNormMap;
 };
 
 #endif // !_CBPEROBJECTS_

@@ -25,8 +25,6 @@ void ObjectsPool::clean()
 	d3d11Device->Release();
 	d3d11DevCon->Release();
 	renderTargetView->Release();
-	squareVertBuffer->Release();
-	squareIndexBuffer->Release();
 	VS->Release();
 	PS->Release();
 	VS_Buffer->Release();

@@ -179,7 +179,9 @@
     <ClCompile Include="MouseAndKeyboard.cpp" />
     <ClCompile Include="MyD3D.cpp" />
     <ClCompile Include="MyEngine.cpp" />
-    <ClCompile Include="ObjectsPool.cpp" />
+    <ClCompile Include="ObjectsPool.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="stdafx.cpp">
