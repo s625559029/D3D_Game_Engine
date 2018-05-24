@@ -878,6 +878,8 @@ bool Mesh::LoadObjModel(std::wstring filename,
 			normalSum = XMVector3Normalize(normalSum);
 			tangentSum = XMVector3Normalize(tangentSum);
 
+			XMVECTOR tmpBiTangent = XMVector3Normalize(XMVector3Cross(normalSum, tangentSum));
+
 			//Store the normal in our current vertex
 			vertices[i].normal.x = XMVectorGetX(normalSum);
 			vertices[i].normal.y = XMVectorGetY(normalSum);
@@ -886,6 +888,10 @@ bool Mesh::LoadObjModel(std::wstring filename,
 			vertices[i].tangent.x = XMVectorGetX(tangentSum);
 			vertices[i].tangent.y = XMVectorGetY(tangentSum);
 			vertices[i].tangent.z = XMVectorGetZ(tangentSum);
+
+			vertices[i].biTangent.x = XMVectorGetX(tmpBiTangent);
+			vertices[i].biTangent.y = XMVectorGetY(tmpBiTangent);
+			vertices[i].biTangent.z = XMVectorGetZ(tmpBiTangent);
 
 			//Clear normalSum and facesUsing for next vertex
 			normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);

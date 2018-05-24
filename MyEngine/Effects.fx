@@ -31,6 +31,7 @@ struct VS_OUTPUT
     float2 texCoord : TEXCOORD;
     float3 normal : NORMAL;
     float3 tangent : TANGENT;
+    float3 biTangent : BITANGENT;
 };
 
 struct SKYMAP_VS_OUTPUT    //output structure for skymap vertex shader
@@ -39,7 +40,7 @@ struct SKYMAP_VS_OUTPUT    //output structure for skymap vertex shader
     float3 texCoord : TEXCOORD;
 };
 
-VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL, float3 tangent : TANGENT)
+VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL, float3 tangent : TANGENT, float3 biTangent : BITANGENT)
 {
     VS_OUTPUT output;
 
@@ -48,6 +49,7 @@ VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 norma
     output.normal = mul(normal, World);
 
     output.tangent = mul(tangent, World);
+    output.biTangent = mul(biTangent, World);
 
     output.texCoord = inTexCoord;
 

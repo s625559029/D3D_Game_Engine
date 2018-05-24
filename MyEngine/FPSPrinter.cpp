@@ -149,6 +149,8 @@ void InitD2DScreenTexture()
 void RenderText(std::wstring text, int inInt)
 {
 	ObjectsPool* objects_pool = ObjectsPool::getInstance();
+	
+	objects_pool->d3d11DevCon->PSSetShader(objects_pool->D2D_PS, 0, 0);
 
 	//Release the D3D 11 Device
 	objects_pool->keyedMutex11->ReleaseSync(0);
