@@ -164,7 +164,9 @@
     <ClInclude Include="MyD3D.h" />
     <ClInclude Include="MyEngine.h" />
     <ClInclude Include="ObjectsPool.h" />
+    <ClInclude Include="Pickable.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="Ray.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="SpotLight.h" />
@@ -172,6 +174,7 @@
     <ClInclude Include="SurfaceMaterial.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Tools.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
@@ -184,6 +187,8 @@
     <ClCompile Include="ObjectsPool.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Pickable.cpp" />
+    <ClCompile Include="Ray.cpp" />
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -193,6 +198,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="Tools.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="MyEngine.ico" />

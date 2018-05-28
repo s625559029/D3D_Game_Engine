@@ -146,7 +146,7 @@ void InitD2DScreenTexture()
 	objects_pool->d3d11Device->CreateShaderResourceView(objects_pool->sharedTex11, NULL, &(objects_pool->d2dTexture));
 }
 
-void RenderText(std::wstring text, int inInt)
+void RenderText(std::wstring text, float inInt)
 {
 	ObjectsPool* objects_pool = ObjectsPool::getInstance();
 	

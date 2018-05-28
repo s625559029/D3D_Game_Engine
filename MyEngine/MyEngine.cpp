@@ -5,8 +5,8 @@
 #include "Timer.h"
 #include "MouseAndKeyboard.h"
 
-const extern int Width;		//window width
-const extern int Height;		//window height
+int ClientWidth = 0;
+int ClientHeight = 0;
 
 LPCTSTR WndClassName = L"firstwindow";		//Define window class name
 HWND hwnd = NULL;		//Windows handle
@@ -123,6 +123,11 @@ LRESULT CALLBACK WndProc(HWND hwnd,    //Default windows procedure
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			return 0;
+
+		case WM_SIZE:
+			ClientWidth = LOWORD(lParam);
+			ClientHeight = HIWORD(lParam);
+			return 0;
 	}
 
 	return DefWindowProc(hwnd,
@@ -159,7 +164,7 @@ int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 		return 0;
 	}
 
-	if (!InitDirectInput(hInstance))	//Initialize direct input
+	if (!DirectInput::InitDirectInput(hInstance))	//Initialize direct input
 	{
 		MessageBox(0, L"Direct Input Initialization - Failed",
 			L"Error", MB_OK);

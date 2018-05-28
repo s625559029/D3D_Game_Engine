@@ -13,6 +13,8 @@
 #include "cbPerObject.h"
 #include "Skybox.h"
 #include "Mesh.h"
+#include "Pickable.h"
+#include "Ray.h"
 
 ObjectsPool* objects_pool;
 
@@ -32,9 +34,6 @@ FPSCamera camera(XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f),
 	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),
 	0.4f*3.14f, 1.0f, 1000.0f);
 
-//Objects information
-Cube cube1;
-
 float rot = 0.01f;
 
 cbPerObject _cbPerObj;
@@ -46,7 +45,14 @@ Light light;
 //Declare sky box
 SkyBox sky_box;
 
-Mesh mesh;
+Mesh ground;
+Pickable bottle;
+
+std::vector<Mesh *> mesh_lists;
+
+XMMATRIX bottleWorld[20];
+int* bottleHit = new int[20];
+int numBottles = 20;
 
 //Declare input layout
 D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -148,7 +154,11 @@ bool InitializeDirect3d11App(HINSTANCE hInstance)
 void ReleaseObjects()
 {
 	objects_pool->clean();
-	sky_box.CleanSkyBox();
+	sky_box.Clean();
+	for (Mesh * mesh : mesh_lists)
+	{
+		mesh->Clean();
+	}
 }
 
 bool InitScene()
@@ -156,8 +166,47 @@ bool InitScene()
 	//Init FPS Printer
 	InitD2DScreenTexture();
 
-	if (!mesh.LoadObjModel(L"ground.obj", true, false))
+	if (!ground.LoadObjModel(L"ground.obj", true, true))
 		return false;
+
+	XMMATRIX Rotation;
+	XMMATRIX Scale;
+	XMMATRIX Translation;
+
+	//Define ground's world space matrix
+	Rotation = XMMatrixRotationY(3.14f);
+	Scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	ground.meshWorld = Rotation * Scale * Translation;
+
+	if (!bottle.LoadObjModel(L"bottle.obj", true, true))
+		return false;
+
+	//////////////
+	float bottleXPos = -30.0f;
+	float bottleZPos = 30.0f;
+	float bxadd = 0.0f;
+	float bzadd = 0.0f;
+
+	for (int i = 0; i < numBottles; i++)
+	{
+		bxadd++;
+
+		if (bxadd == 10)
+		{
+			bzadd -= 1.0f;
+			bxadd = 0;
+		}
+
+		Rotation = XMMatrixRotationY(3.14f);
+		Scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+		Translation = XMMatrixTranslation(bottleXPos + bxadd*10.0f, 4.0f, bottleZPos + bzadd*10.0f);
+
+		bottleWorld[i] = Rotation * Scale * Translation;
+
+		bottleHit[i] = 0;
+	}
+	/////////////
 
 	//Shader process
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "VS", "vs_4_0", 0, 0, 0, &(objects_pool->VS_Buffer), 0, 0);
@@ -287,14 +336,39 @@ bool InitScene()
 
 void UpdateScene(double time)
 {
-	camera.DetectInput(time);
+	DirectInput::DetectInput(time);
+	
+	if (DirectInput::isShoot)
+	{
+		pickRayVector(camera);
 
-	//Define cube1's world space matrix
-	cube1.Translation = XMMatrixTranslation(0.0f, 10.0f, 0.0f);
-	cube1.Scale = XMMatrixScaling(500.0f, 10.0f, 500.0f);
+		float tempDist;
+		float closestDist = FLT_MAX;
+		int hitIndex;
+
+		for (int i = 0; i < numBottles; i++)
+		{
+			if (bottleHit[i] == 0) //No need to check bottles already hit
+			{
+				tempDist = pick(bottle.vertPosArray, bottle.vertIndexArray, bottleWorld[i]);
+				if (tempDist < closestDist)
+				{
+					closestDist = tempDist;
+					hitIndex = i;
+				}
+			}
+		}
+		
+		if (closestDist < FLT_MAX) 
+		{
+			bottleHit[hitIndex] = 1;
+		}
+
+	}
+
+	camera.UpdateCamera();
 
 	sky_box.UpdateSkyBox(camera);
-	mesh.Update();
 }
 
 void DrawScene()
@@ -321,7 +395,16 @@ void DrawScene()
 
 	sky_box.DrawSkyBox(camera, _cbPerObj);
 
-	mesh.Draw(camera, _cbPerObj);
+	ground.Draw(camera, _cbPerObj);
+
+	for (int i = 0; i < numBottles; i++)
+	{
+		if (bottleHit[i] == 0) 
+		{
+			bottle.meshWorld = bottleWorld[i];
+			bottle.Draw(camera, _cbPerObj);
+		}
+	}
 
 	RenderText(L"FPS: ", fps);
 

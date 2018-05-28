@@ -110,7 +110,7 @@ void SkyBox::DrawSkyBox(Camera & camera, cbPerObject & _cbPerObj)
 	objects_pool->d3d11DevCon->OMSetDepthStencilState(NULL, 0);
 }
 
-void SkyBox::CleanSkyBox()
+void SkyBox::Clean()
 {
 	//Clean sky box objects
 	sphere.cleanSphere();

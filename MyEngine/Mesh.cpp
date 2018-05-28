@@ -955,22 +955,19 @@ bool Mesh::LoadObjModel(std::wstring filename,
 	return true;
 }
 
-void Mesh::CleanMesh()
+void Mesh::Clean()
 {
 	meshVertBuff->Release();
 	meshIndexBuff->Release();
+	for (int i = 0; i < meshSRV.size(); i++)
+	{
+		meshSRV[i]->Release();
+	}
 }
 
 void Mesh::Update()
 {
-	meshWorld = XMMatrixIdentity();
-
-	//Define cube1's world space matrix
-	XMMATRIX Rotation = XMMatrixRotationY(3.14f);
-	XMMATRIX Scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-	XMMATRIX Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-
-	meshWorld = Rotation * Scale * Translation;
+	
 }
 
 void Mesh::Draw(Camera & cam, cbPerObject & _cbPerObj)

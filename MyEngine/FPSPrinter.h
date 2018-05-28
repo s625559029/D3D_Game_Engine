@@ -6,7 +6,7 @@
 //FPS Printer functions
 bool InitD2D_D3D101_DWrite(IDXGIAdapter1 *Adapter);
 void InitD2DScreenTexture();
-void RenderText(std::wstring text, int inInt);
+void RenderText(std::wstring text, float inInt);
 
 #endif // ! _FPSPRINTER_
 

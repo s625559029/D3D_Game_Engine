@@ -14,7 +14,7 @@ public:
 
 	void DrawSkyBox(Camera & camera, cbPerObject & _cbPerObj);
 
-	void CleanSkyBox();
+	void Clean();
 
 	//Sky box objects
 	ID3D11VertexShader* SKYMAP_VS;

@@ -87,12 +87,10 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 
         //Make sure tangent is completely orthogonal to normal
         input.tangent = normalize(input.tangent - dot(input.tangent, input.normal)*input.normal);
-
-        //Create the biTangent
-        float3 biTangent = cross(input.normal, input.tangent);
+        input.biTangent = normalize(input.biTangent - dot(input.biTangent, input.normal)*input.normal);
 
         //Create the "Texture Space"
-        float3x3 texSpace = float3x3(input.tangent, biTangent, input.normal);
+        float3x3 texSpace = float3x3(input.tangent, input.biTangent, input.normal);
 
         //Convert normal from normal map to texture space and store in input.normal
         input.normal = normalize(mul(normalMap, texSpace));

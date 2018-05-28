@@ -13,11 +13,11 @@ public:
 	Mesh() {}
 
 	//Define LoadObjModel function after we create surfaceMaterial structure
-	bool LoadObjModel(std::wstring filename,        //.obj filename
+	virtual bool LoadObjModel(std::wstring filename,        //.obj filename
 		bool isRHCoordSys,							//true if model was created in right hand coord system
 		bool computeNormals);						//true to compute the normals, false to use the files normals
 
-	void CleanMesh();
+	void Clean();
 
 	void Update();
 
@@ -31,6 +31,7 @@ public:
 	XMMATRIX meshWorld;
 
 	int meshSubsets = 0;
+
 	std::vector<int> meshSubsetIndexStart;
 	std::vector<int> meshSubsetTexture;
 
@@ -38,6 +39,10 @@ public:
 	std::vector<std::wstring> textureNameArray;
 
 	std::vector<SurfaceMaterial> material;
+
+	XMMATRIX rotation;
+	XMMATRIX scale;
+	XMMATRIX translation;
 };
 
 

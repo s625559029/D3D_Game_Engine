@@ -3,7 +3,7 @@
 
 extern HWND hwnd;
 
-const int Width = 800;		//window width
+const int Width = 800;	//window width
 const int Height = 600;		//window height
 
 //Back ground color

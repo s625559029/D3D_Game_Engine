@@ -3,6 +3,9 @@
 
 #include <windows.h>
 
+extern int ClientWidth;
+extern int ClientHeight;
+
 bool InitializeWindow(HINSTANCE hInstance,		//Initialize window
 	int ShowWnd,
 	int width, int height,

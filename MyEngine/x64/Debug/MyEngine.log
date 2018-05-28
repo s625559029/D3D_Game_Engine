@@ -1,4 +1,4 @@
-﻿  MyD3D.cpp
+﻿  MyEngine.cpp
 d:\program files (x86)\microsoft directx sdk (june 2010)\include\dxgitype.h(12): warning C4005: “DXGI_STATUS_OCCLUDED”: 宏重定义
   d:\program files (x86)\windows kits\8.1\include\shared\winerror.h(50092): note: 参见“DXGI_STATUS_OCCLUDED”的前一个定义
 d:\program files (x86)\microsoft directx sdk (june 2010)\include\dxgitype.h(13): warning C4005: “DXGI_STATUS_CLIPPED”: 宏重定义

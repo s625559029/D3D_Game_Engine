@@ -13,19 +13,16 @@ public:
 		DefaultRight(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f)),
 		camForward(DefaultForward),
 		camRight(DefaultRight),
-		moveLeftRight(0.0f),
-		moveBackForward(0.0f),
-		camYaw(0.0f),
-		camPitch(0.0f)
+		moveSpeed(15.0f),
+		camSpeed(0.001f)
 	{
 		
 	}
 
-	void DetectInput(double time);
 	void UpdateCamera();
 
-	float camYaw;
-	float camPitch;
+	float moveSpeed;
+	float camSpeed;
 
 private:
 	XMVECTOR DefaultForward;
@@ -33,9 +30,6 @@ private:
 
 	XMVECTOR camForward;
 	XMVECTOR camRight;
-
-	float moveLeftRight;
-	float moveBackForward;
 
 	XMMATRIX camRotationMatrix;
 

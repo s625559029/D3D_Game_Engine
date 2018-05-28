@@ -3,12 +3,20 @@
 
 #include "D3DHeader.h"
 
-extern float rotx;
-extern float rotz;
-extern float scaleX;
-extern float scaleY;
+namespace DirectInput {
 
-bool InitDirectInput(HINSTANCE hInstance);
-void DetectInput(double time);
+	extern float keyboardLeftRight;
+	extern float keyboardForwardBack;
+	extern float mouseLeftRight;
+	extern float mouseUpDown;
+	extern bool isShoot;
+
+	extern int mouseX;
+	extern int mouseY;
+
+	bool InitDirectInput(HINSTANCE hInstance);
+	void DetectInput(double time);
+
+}
 
 #endif // !_MOUSEANDKEYBOARD_
