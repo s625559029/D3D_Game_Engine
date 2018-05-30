@@ -3,7 +3,7 @@
 
 bool InitializeDirect3d11App(HINSTANCE hInstance);
 void ReleaseObjects();
-bool InitScene();
+bool InitScene(HINSTANCE & hInstance);
 void UpdateScene(double time);
 void DrawScene();
 void CreateLight();

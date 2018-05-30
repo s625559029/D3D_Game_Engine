@@ -6,7 +6,7 @@
 XMVECTOR pickRayInWorldSpacePos;
 XMVECTOR pickRayInWorldSpaceDir;
 
-void pickRayVector(FPSCamera & cam)
+void pickRayVector(FPSCamera & cam, Player & player)
 {
 	XMVECTOR pickRayInViewSpaceDir = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR pickRayInViewSpacePos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
@@ -14,8 +14,8 @@ void pickRayVector(FPSCamera & cam)
 	float PRVecX, PRVecY, PRVecZ;
 
 	//Transform 2D pick position on screen space to 3D ray in View space
-	PRVecX = (((2.0f * DirectInput::mouseX) / ClientWidth) - 1) / cam.getCamProjection()(0, 0);
-	PRVecY = -(((2.0f * DirectInput::mouseY) / ClientHeight) - 1) / cam.getCamProjection()(1, 1);
+	PRVecX = (((2.0f * player.mouseX) / ClientWidth) - 1) / cam.camProj(0, 0);
+	PRVecY = -(((2.0f * player.mouseY) / ClientHeight) - 1) / cam.camProj(1, 1);
 	PRVecZ = 1.0f;    //View space's Z direction ranges from 0 to 1, so we set 1 since the ray goes "into" the screen
 
 	pickRayInViewSpaceDir = XMVectorSet(PRVecX, PRVecY, PRVecZ, 0.0f);
@@ -28,7 +28,7 @@ void pickRayVector(FPSCamera & cam)
 	XMMATRIX pickRayToWorldSpaceMatrix;
 	XMVECTOR matInvDeter;    //We don't use this, but the xna matrix inverse function requires the first parameter to not be null
 
-	pickRayToWorldSpaceMatrix = XMMatrixInverse(&matInvDeter, cam.getCamView());    //Inverse of View Space matrix is World space matrix
+	pickRayToWorldSpaceMatrix = XMMatrixInverse(&matInvDeter, cam.camView);    //Inverse of View Space matrix is World space matrix
 
 	pickRayInWorldSpacePos = XMVector3TransformCoord(pickRayInViewSpacePos, pickRayToWorldSpaceMatrix);
 	pickRayInWorldSpaceDir = XMVector3TransformNormal(pickRayInViewSpaceDir, pickRayToWorldSpaceMatrix);

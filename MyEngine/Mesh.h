@@ -5,6 +5,8 @@
 #include "SurfaceMaterial.h"
 #include "Camera.h"
 #include "cbPerObject.h"
+#include "ObjectsPool.h"
+#include "AABB.h"
 
 class Mesh
 {
@@ -17,11 +19,11 @@ public:
 		bool isRHCoordSys,							//true if model was created in right hand coord system
 		bool computeNormals);						//true to compute the normals, false to use the files normals
 
-	void Clean();
+	virtual void Clean();
 
-	void Update();
+	virtual void Update();
 
-	void Draw(Camera & cam, cbPerObject & _cbPerObj);
+	void Draw(Camera & cam, cbPerObject & _cbPerObj, bool transparent);
 
 	ID3D11BlendState* Transparency;
 
@@ -43,6 +45,15 @@ public:
 	XMMATRIX rotation;
 	XMMATRIX scale;
 	XMMATRIX translation;
+
+	float bounding_sphere_radius;
+	XMVECTOR center_offset;
+
+	//Used for bounding box
+	std::vector<XMFLOAT3> vertPosArray;
+	std::vector<DWORD> vertIndexArray;
+
+	AABB bbox;
 };
 
 

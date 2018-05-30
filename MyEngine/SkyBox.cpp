@@ -86,7 +86,7 @@ void SkyBox::DrawSkyBox(Camera & camera, cbPerObject & _cbPerObj)
 
 	//Set the WVP matrix and send it to the constant buffer in effect file
 	XMMATRIX WVP;
-	WVP = sphere.sphereWorld * camera.getCamView() * camera.getCamProjection();
+	WVP = sphere.sphereWorld * camera.camView * camera.camProj;
 	_cbPerObj.WVP = XMMatrixTranspose(WVP);
 	_cbPerObj.World = XMMatrixTranspose(sphere.sphereWorld);
 

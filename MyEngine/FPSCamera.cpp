@@ -2,15 +2,15 @@
 #include "Config.h"
 #include "FPSCamera.h"
 #include "ObjectsPool.h"
-#include "MouseAndKeyboard.h"
+#include "Player.h"
 
-void FPSCamera::UpdateCamera()
+void FPSCamera::UpdateCamera(Player & player)
 {
-	float moveBackForward = DirectInput::keyboardForwardBack * moveSpeed;
-	float moveLeftRight = DirectInput::keyboardLeftRight * moveSpeed;
+	float moveBackForward = player.keyboardForwardBack * moveSpeed;
+	float moveLeftRight = player.keyboardLeftRight * moveSpeed;
 
-	float camYaw = DirectInput::mouseLeftRight * camSpeed;
-	float camPitch = DirectInput::mouseUpDown * camSpeed;
+	float camYaw = player.mouseLeftRight * camSpeed;
+	float camPitch = player.mouseUpDown * camSpeed;
 
 	camRotationMatrix = XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0);
 	camTarget = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
@@ -30,4 +30,6 @@ void FPSCamera::UpdateCamera()
 	moveBackForward = 0.0f;
 
 	camTarget = camPosition + camTarget;
+
+	Camera::UpdateCamera();
 }

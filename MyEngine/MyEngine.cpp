@@ -3,7 +3,7 @@
 #include "MyEngine.h"
 #include "Config.h"
 #include "Timer.h"
-#include "MouseAndKeyboard.h"
+#include "Player.h"
 
 int ClientWidth = 0;
 int ClientHeight = 0;
@@ -157,16 +157,9 @@ int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 		return 0;
 	}
 
-	if (!InitScene())    //Initialize our scene
+	if (!InitScene(hInstance))    //Initialize our scene
 	{
 		MessageBox(0, L"Scene Initialization - Failed",
-			L"Error", MB_OK);
-		return 0;
-	}
-
-	if (!DirectInput::InitDirectInput(hInstance))	//Initialize direct input
-	{
-		MessageBox(0, L"Direct Input Initialization - Failed",
 			L"Error", MB_OK);
 		return 0;
 	}

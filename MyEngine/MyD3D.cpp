@@ -8,13 +8,16 @@
 #include "ObjectsPool.h"
 #include "FPSPrinter.h"
 #include "Light.h"
-#include "MouseAndKeyboard.h"
+#include "Player.h"
 #include "cbPerFrame.h"
 #include "cbPerObject.h"
 #include "Skybox.h"
 #include "Mesh.h"
-#include "Pickable.h"
 #include "Ray.h"
+#include "AABB.h"
+#include "Bounding.h"
+#include "Movable.h"
+#include "Collision.h"
 
 ObjectsPool* objects_pool;
 
@@ -27,6 +30,8 @@ const extern int colormodb;
 
 XMMATRIX WVP;
 XMMATRIX World;
+
+Player player;
 
 //Camera information
 FPSCamera camera(XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f),
@@ -46,13 +51,25 @@ Light light;
 SkyBox sky_box;
 
 Mesh ground;
-Pickable bottle;
+Mesh bottle;
+
+Movable bullet;
 
 std::vector<Mesh *> mesh_lists;
 
-XMMATRIX bottleWorld[20];
-int* bottleHit = new int[20];
-int numBottles = 20;
+int numBottles = 820;
+XMMATRIX bottleWorld[820];
+int* bottleHit = new int[820];
+
+float bottleBoundingSphere = 0.0f;
+std::vector<XMFLOAT3> bottleBoundingBoxVertPosArray;
+std::vector<DWORD> bottleBoundingBoxVertIndexArray;
+XMVECTOR bottleCenterOffset;
+
+//Bounding strategy
+int pickWhat = 1;
+
+AABB bbox;
 
 //Declare input layout
 D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -155,14 +172,14 @@ void ReleaseObjects()
 {
 	objects_pool->clean();
 	sky_box.Clean();
-	for (Mesh * mesh : mesh_lists)
-	{
-		mesh->Clean();
-	}
+	bottle.Clean();
+	bullet.Clean();
 }
 
-bool InitScene()
+bool InitScene(HINSTANCE & hInstance)
 {
+	player.InitDirectInput(hInstance);
+
 	//Init FPS Printer
 	InitD2DScreenTexture();
 
@@ -180,6 +197,9 @@ bool InitScene()
 	ground.meshWorld = Rotation * Scale * Translation;
 
 	if (!bottle.LoadObjModel(L"bottle.obj", true, true))
+		return false;
+
+	if (!bullet.LoadObjModel(L"bottle.obj", true, true))
 		return false;
 
 	//////////////
@@ -207,6 +227,18 @@ bool InitScene()
 		bottleHit[i] = 0;
 	}
 	/////////////
+
+	CreateBoundingSphere(bottle.vertPosArray, bottleBoundingSphere, bottleCenterOffset);
+
+	bottle.bounding_sphere_radius = bottleBoundingSphere;
+	bottle.center_offset = bottleCenterOffset;
+	bullet.bounding_sphere_radius = bottleBoundingSphere;
+	bullet.center_offset = bottleCenterOffset;
+
+	bbox.CreateAABB(bottle.vertPosArray);
+	bottle.bbox = bbox;
+	bbox.CreateAABB(bullet.vertPosArray);
+	bullet.bbox = bbox;
 
 	//Shader process
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "VS", "vs_4_0", 0, 0, 0, &(objects_pool->VS_Buffer), 0, 0);
@@ -334,23 +366,63 @@ bool InitScene()
 	return true;
 }
 
-void UpdateScene(double time)
+bool preShoot = false;
+
+void CheckRayIntersect()
 {
-	DirectInput::DetectInput(time);
-	
-	if (DirectInput::isShoot)
+	if (player.isShoot && !preShoot)
 	{
-		pickRayVector(camera);
+		/*pickRayVector(camera, player);
 
 		float tempDist;
 		float closestDist = FLT_MAX;
 		int hitIndex;
 
+		double pickOpStartTime = GetTime();        // Get the time before we start our picking operation
+
 		for (int i = 0; i < numBottles; i++)
 		{
-			if (bottleHit[i] == 0) //No need to check bottles already hit
+			if (bottleHit[i] == 0) // No need to check bottles already hit
 			{
-				tempDist = pick(bottle.vertPosArray, bottle.vertIndexArray, bottleWorld[i]);
+				tempDist = FLT_MAX;
+
+				if (pickWhat == 0)
+				{
+					float pRToPointDist = 0.0f; // Closest distance from the pick ray to the objects center
+
+					XMVECTOR bottlePos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+					XMVECTOR pOnLineNearBottle = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+
+					//Add offset for bounding to actual center
+					bottlePos = XMVector3TransformCoord(bottlePos, bottleWorld[i]) + bottleCenterOffset;
+
+					// This equation gets the point on the pick ray which is closest to bottlePos
+					pOnLineNearBottle = pickRayInWorldSpacePos 
+						+ XMVector3Dot((bottlePos - pickRayInWorldSpacePos), pickRayInWorldSpaceDir)
+						/ XMVector3Dot(pickRayInWorldSpaceDir, pickRayInWorldSpaceDir) * pickRayInWorldSpaceDir;
+
+					//Get distance from point to ray              
+					pRToPointDist = XMVectorGetX(XMVector3Length(pOnLineNearBottle - bottlePos));
+					
+					//If inside sphere
+					if (pRToPointDist < bottleBoundingSphere)
+					{
+						// This line is the distance to the pick ray intersection with the sphere
+						//tempDist = XMVectorGetX(XMVector3Length(pOnLineNearBottle - prwsPos));
+
+						// Check for picking with the actual model now
+						tempDist = pick(bottle.vertPosArray, bottle.vertIndexArray, bottleWorld[i]);
+					}
+				}
+
+				// Bounding Box picking test
+				if (pickWhat == 1)
+					tempDist = pick(bbox.boundingBoxVerts, bbox.boundingBoxIndex, bottleWorld[i]);
+
+				// Check for picking directly with the model without bounding volumes testing first
+				if (pickWhat == 2)
+					tempDist = pick(bottle.vertPosArray, bottle.vertIndexArray, bottleWorld[i]);
+
 				if (tempDist < closestDist)
 				{
 					closestDist = tempDist;
@@ -358,17 +430,56 @@ void UpdateScene(double time)
 				}
 			}
 		}
-		
-		if (closestDist < FLT_MAX) 
+
+		if (closestDist < FLT_MAX)
 		{
 			bottleHit[hitIndex] = 1;
-		}
+		}*/
 
+		bullet.isMoving = true;
+		bullet.meshWorld = XMMatrixIdentity();
+		bullet.meshWorld = XMMatrixTranslation(XMVectorGetX(camera.camPosition), XMVectorGetY(camera.camPosition), XMVectorGetZ(camera.camPosition));
+		bullet.meshDir = camera.camTarget - camera.camPosition;
+
+		preShoot = true;
 	}
+	if (!player.isShoot)
+	{
+		preShoot = false;
+	}
+}
 
-	camera.UpdateCamera();
+void HandleCollisions()
+{
+	bullet.bbox.UpdateAABB(bullet.meshWorld);
+	for (int i = 0; i < numBottles; i++)
+	{
+		bottle.meshWorld = bottleWorld[i];
+		bottle.bbox.UpdateAABB(bottle.meshWorld);
+		if (bottleHit[i] == 0)
+		{
+			if (CollisionDetect(bullet, bottle, 0))
+			{
+				bullet.isMoving = false;
+				bottleHit[i] = 1;
+			}
+		}
+	}
+}
+
+void UpdateScene(double time)
+{
+	player.DetectInput(time);
+	
+	camera.UpdateCamera(player);
 
 	sky_box.UpdateSkyBox(camera);
+
+	CheckRayIntersect();
+
+	bullet.Update(time);
+
+	HandleCollisions();
 }
 
 void DrawScene()
@@ -391,20 +502,30 @@ void DrawScene()
 	objects_pool->d3d11DevCon->OMSetRenderTargets(1, &objects_pool->renderTargetView, objects_pool->depthStencilView);
 
 	//Reset the default blend state (no blending)
+	//Draw non transparent part
 	objects_pool->d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
 
 	sky_box.DrawSkyBox(camera, _cbPerObj);
 
-	ground.Draw(camera, _cbPerObj);
+	ground.Draw(camera, _cbPerObj, false);
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
 
 	for (int i = 0; i < numBottles; i++)
 	{
 		if (bottleHit[i] == 0) 
 		{
 			bottle.meshWorld = bottleWorld[i];
-			bottle.Draw(camera, _cbPerObj);
+			bottle.Draw(camera, _cbPerObj, false);
 		}
 	}
+
+	if (bullet.isMoving) bullet.Draw(camera, _cbPerObj, false);
+
+	//Draw transparent part
+	objects_pool->d3d11DevCon->OMSetBlendState(bottle.Transparency, NULL, 0xffffffff);
+	//Our bottle has no transparent part so we won't draw anything here
 
 	RenderText(L"FPS: ", fps);
 

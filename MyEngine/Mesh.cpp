@@ -9,14 +9,15 @@ bool Mesh::LoadObjModel(std::wstring filename,
 	bool isRHCoordSys, 
 	bool computeNormals)
 {
+
 	ObjectsPool * op = ObjectsPool::getInstance();
 
 	HREFTYPE hr = 0;
 
 	std::wifstream fileIn(filename.c_str());    //Open file
 	std::wstring meshMatLib;                    //String to hold our obj material library filename
-	
-	//Arrays to store our model's information
+
+												//Arrays to store our model's information
 	std::vector<DWORD> indices;
 	std::vector<XMFLOAT3> vertPos;
 	std::vector<XMFLOAT3> vertNorm;
@@ -429,7 +430,7 @@ bool Mesh::LoadObjModel(std::wstring filename,
 	else    //If we could not open the file
 	{
 		op->SwapChain->SetFullscreenState(false, NULL);    //Make sure we are out of fullscreen
-													   //create message
+														   //create message
 		std::wstring message = L"Could not open: ";
 		message += filename;
 
@@ -441,8 +442,8 @@ bool Mesh::LoadObjModel(std::wstring filename,
 
 	meshSubsetIndexStart.push_back(vIndex); //There won't be another index start after our last subset, so set it here
 
-	//sometimes "g" is defined at the very top of the file, then again before the first group of faces.
-	//This makes sure the first subset does not conatain "0" indices.
+											//sometimes "g" is defined at the very top of the file, then again before the first group of faces.
+											//This makes sure the first subset does not conatain "0" indices.
 	if (meshSubsetIndexStart[1] == 0)
 	{
 		meshSubsetIndexStart.erase(meshSubsetIndexStart.begin() + 1);
@@ -463,8 +464,8 @@ bool Mesh::LoadObjModel(std::wstring filename,
 	std::wstring lastStringRead;
 	int matCount = material.size();    //total materials
 
-	//kdset - If our diffuse color was not set, we can use the ambient color (which is usually the same)
-	//If the diffuse color WAS set, then we don't need to set our diffuse color to ambient
+									   //kdset - If our diffuse color was not set, we can use the ambient color (which is usually the same)
+									   //If the diffuse color WAS set, then we don't need to set our diffuse color to ambient
 	bool kdset = false;
 
 	if (fileIn)
@@ -776,7 +777,11 @@ bool Mesh::LoadObjModel(std::wstring filename,
 		tempVert.texCoord = vertTexCoord[vertTCIndex[j]];
 
 		vertices.push_back(tempVert);
+
+		vertPosArray.push_back(tempVert.pos);
 	}
+
+	vertIndexArray = indices;
 
 	//////////////////////Compute Normals///////////////////////////
 	//If computeNormals was set to true then we will create our own
@@ -809,17 +814,17 @@ bool Mesh::LoadObjModel(std::wstring filename,
 			vecZ = vertices[indices[(i * 3)]].pos.z - vertices[indices[(i * 3) + 2]].pos.z;
 			edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);    //Create our first edge
 
-			//Get the vector describing another edge of our triangle (edge 2,1)
+															//Get the vector describing another edge of our triangle (edge 2,1)
 			vecX = vertices[indices[(i * 3) + 2]].pos.x - vertices[indices[(i * 3) + 1]].pos.x;
 			vecY = vertices[indices[(i * 3) + 2]].pos.y - vertices[indices[(i * 3) + 1]].pos.y;
 			vecZ = vertices[indices[(i * 3) + 2]].pos.z - vertices[indices[(i * 3) + 1]].pos.z;
 			edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);    //Create our second edge
 
-			//Cross multiply the two edge vectors to get the un-normalized face normal
+															//Cross multiply the two edge vectors to get the un-normalized face normal
 			XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
 			tempNormal.push_back(unnormalized);            //Save unormalized normal (for normal averaging)
-		
-			//Find first texture coordinate edge 2d vector
+
+														   //Find first texture coordinate edge 2d vector
 			tcU1 = vertices[indices[(i * 3)]].texCoord.x - vertices[indices[(i * 3) + 2]].texCoord.x;
 			tcV1 = vertices[indices[(i * 3)]].texCoord.y - vertices[indices[(i * 3) + 2]].texCoord.y;
 
@@ -858,14 +863,14 @@ bool Mesh::LoadObjModel(std::wstring filename,
 					tZ = XMVectorGetZ(normalSum) + tempNormal[j].z;
 
 					normalSum = XMVectorSet(tX, tY, tZ, 0.0f);    //If a face is using the vertex, add the unormalized face normal to the normalSum
-					
-					//We can reuse tX, tY, tZ to sum up tangents
+
+																  //We can reuse tX, tY, tZ to sum up tangents
 					tX = XMVectorGetX(tangentSum) + tempTangent[j].x;
 					tY = XMVectorGetY(tangentSum) + tempTangent[j].y;
 					tZ = XMVectorGetZ(tangentSum) + tempTangent[j].z;
 
 					tangentSum = XMVectorSet(tX, tY, tZ, 0.0f); //sum up face tangents using this vertex
-					
+
 					facesUsing++;
 				}
 			}
@@ -930,7 +935,7 @@ bool Mesh::LoadObjModel(std::wstring filename,
 	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
 	vertexBufferData.pSysMem = &vertices[0];
 	op->d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &meshVertBuff);
-	
+
 	//Create blend state
 	D3D11_BLEND_DESC blendDesc;
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
@@ -952,6 +957,7 @@ bool Mesh::LoadObjModel(std::wstring filename,
 
 	op->d3d11Device->CreateBlendState(&blendDesc, &Transparency);
 
+
 	return true;
 }
 
@@ -970,26 +976,26 @@ void Mesh::Update()
 	
 }
 
-void Mesh::Draw(Camera & cam, cbPerObject & _cbPerObj)
+void Mesh::Draw(Camera & cam, cbPerObject & _cbPerObj, bool transparent)
 {
 	ObjectsPool * op = ObjectsPool::getInstance();
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
-	op->d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
-
 	//Draw our model's NON-transparent subsets
 	for (int i = 0; i < meshSubsets; ++i)
 	{
+		if (transparent && !material[meshSubsetTexture[i]].transparent 
+			|| !transparent && material[meshSubsetTexture[i]].transparent) continue;
+
 		//Set the grounds index buffer
 		op->d3d11DevCon->IASetIndexBuffer(meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
 		//Set the grounds vertex buffer
 		op->d3d11DevCon->IASetVertexBuffers(0, 1, &meshVertBuff, &stride, &offset);
 
 		//Set the WVP matrix and send it to the constant buffer in effect file
-		XMMATRIX WVP = XMMatrixIdentity();
-		WVP = meshWorld * cam.getCamView() * cam.getCamProjection();
+		XMMATRIX WVP = meshWorld * cam.camView * cam.camProj;
 
 		_cbPerObj.WVP = XMMatrixTranspose(WVP);
 		_cbPerObj.World = XMMatrixTranspose(meshWorld);
@@ -1009,45 +1015,42 @@ void Mesh::Draw(Camera & cam, cbPerObject & _cbPerObj)
 		op->d3d11DevCon->RSSetState(op->RSCullNone);
 		int indexStart = meshSubsetIndexStart[i];
 		int indexDrawAmount = meshSubsetIndexStart[i + 1] - meshSubsetIndexStart[i];
-		if (!material[meshSubsetTexture[i]].transparent)
-			op->d3d11DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+
+		op->d3d11DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 	}
 
-	//Draw our model's TRANSPARENT subsets now
+		//Draw our model's TRANSPARENT subsets now
 
-	//Set our blend state
-	op->d3d11DevCon->OMSetBlendState(Transparency, NULL, 0xffffffff);
+		/*for (int i = 0; i < meshSubsets; ++i)
+		{
+			//Set the grounds index buffer
+			op->d3d11DevCon->IASetIndexBuffer(meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
+			//Set the grounds vertex buffer
+			op->d3d11DevCon->IASetVertexBuffers(0, 1, &meshVertBuff, &stride, &offset);
 
-	for (int i = 0; i < meshSubsets; ++i)
-	{
-		//Set the grounds index buffer
-		op->d3d11DevCon->IASetIndexBuffer(meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
-		//Set the grounds vertex buffer
-		op->d3d11DevCon->IASetVertexBuffers(0, 1, &meshVertBuff, &stride, &offset);
+			//Set the WVP matrix and send it to the constant buffer in effect file
+			XMMATRIX WVP = XMMatrixIdentity();
+			WVP = meshWorld * cam.getCamView() * cam.getCamProjection();
 
-		//Set the WVP matrix and send it to the constant buffer in effect file
-		XMMATRIX WVP = XMMatrixIdentity();
-		WVP = meshWorld * cam.getCamView() * cam.getCamProjection();
+			_cbPerObj.WVP = XMMatrixTranspose(WVP);
+			_cbPerObj.World = XMMatrixTranspose(meshWorld);
+			_cbPerObj.difColor = material[meshSubsetTexture[i]].difColor;
+			_cbPerObj.hasTexture = material[meshSubsetTexture[i]].hasTexture;
+			_cbPerObj.hasNormMap = material[meshSubsetTexture[i]].hasNormMap;
 
-		_cbPerObj.WVP = XMMatrixTranspose(WVP);
-		_cbPerObj.World = XMMatrixTranspose(meshWorld);
-		_cbPerObj.difColor = material[meshSubsetTexture[i]].difColor;
-		_cbPerObj.hasTexture = material[meshSubsetTexture[i]].hasTexture;
-		_cbPerObj.hasNormMap = material[meshSubsetTexture[i]].hasNormMap;
+			op->d3d11DevCon->UpdateSubresource(op->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
+			op->d3d11DevCon->VSSetConstantBuffers(0, 1, &(op->cbPerObjectBuffer));
+			op->d3d11DevCon->PSSetConstantBuffers(1, 1, &(op->cbPerObjectBuffer));
+			if (material[meshSubsetTexture[i]].hasTexture)
+				op->d3d11DevCon->PSSetShaderResources(0, 1, &meshSRV[material[meshSubsetTexture[i]].texArrayIndex]);
+			if (material[meshSubsetTexture[i]].hasNormMap)
+				op->d3d11DevCon->PSSetShaderResources(1, 1, &meshSRV[material[meshSubsetTexture[i]].normMapTexArrayIndex]);
+			op->d3d11DevCon->PSSetSamplers(0, 1, &(op->CubesTexSamplerState));
 
-		op->d3d11DevCon->UpdateSubresource(op->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
-		op->d3d11DevCon->VSSetConstantBuffers(0, 1, &(op->cbPerObjectBuffer));
-		op->d3d11DevCon->PSSetConstantBuffers(1, 1, &(op->cbPerObjectBuffer));
-		if (material[meshSubsetTexture[i]].hasTexture)
-			op->d3d11DevCon->PSSetShaderResources(0, 1, &meshSRV[material[meshSubsetTexture[i]].texArrayIndex]);
-		if (material[meshSubsetTexture[i]].hasNormMap)
-			op->d3d11DevCon->PSSetShaderResources(1, 1, &meshSRV[material[meshSubsetTexture[i]].normMapTexArrayIndex]);
-		op->d3d11DevCon->PSSetSamplers(0, 1, &(op->CubesTexSamplerState));
-
-		op->d3d11DevCon->RSSetState(op->RSCullNone);
-		int indexStart = meshSubsetIndexStart[i];
-		int indexDrawAmount = meshSubsetIndexStart[i + 1] - meshSubsetIndexStart[i];
-		if (material[meshSubsetTexture[i]].transparent)
-			op->d3d11DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
-	}
+			op->d3d11DevCon->RSSetState(op->RSCullNone);
+			int indexStart = meshSubsetIndexStart[i];
+			int indexDrawAmount = meshSubsetIndexStart[i + 1] - meshSubsetIndexStart[i];
+			if (material[meshSubsetTexture[i]].transparent)
+				op->d3d11DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+		}*/
 }

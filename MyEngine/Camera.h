@@ -13,14 +13,10 @@ public:
 		  FOV(_fov), nearPlane(_near), farPlane(_far)
 	{}
 
-	XMMATRIX getCamView()
+	virtual void UpdateCamera()
 	{
-		return XMMatrixLookAtLH(camPosition, camTarget, camUp);
-	}
-
-	XMMATRIX getCamProjection()
-	{
-		return XMMatrixPerspectiveFovLH(FOV, (float)Width / Height, nearPlane, farPlane);
+		camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
+		camProj = XMMatrixPerspectiveFovLH(FOV, (float)Width / Height, nearPlane, farPlane);
 	}
 
 	XMVECTOR camPosition;
@@ -29,6 +25,8 @@ public:
 	FLOAT FOV;
 	FLOAT nearPlane;
 	FLOAT farPlane;
+	XMMATRIX camView;
+	XMMATRIX camProj;
 };
 
 #endif // !_CAMERA_

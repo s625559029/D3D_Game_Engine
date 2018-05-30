@@ -1,4 +1,4 @@
-﻿  MyEngine.cpp
+﻿  MyD3D.cpp
 d:\program files (x86)\microsoft directx sdk (june 2010)\include\dxgitype.h(12): warning C4005: “DXGI_STATUS_OCCLUDED”: 宏重定义
   d:\program files (x86)\windows kits\8.1\include\shared\winerror.h(50092): note: 参见“DXGI_STATUS_OCCLUDED”的前一个定义
 d:\program files (x86)\microsoft directx sdk (june 2010)\include\dxgitype.h(13): warning C4005: “DXGI_STATUS_CLIPPED”: 宏重定义
@@ -166,5 +166,6 @@ d:\program files (x86)\microsoft directx sdk (june 2010)\include\dwrite.h(4988):
 d:\program files (x86)\microsoft directx sdk (june 2010)\include\dwrite.h(4993): warning C4005: “DWRITE_E_ALREADYREGISTERED”: 宏重定义
   d:\program files (x86)\windows kits\8.1\include\shared\winerror.h(50975): note: 参见“DWRITE_E_ALREADYREGISTERED”的前一个定义
   d:\program files (x86)\microsoft directx sdk (june 2010)\include\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+c:\users\sun\vs_projects\myengine\myengine\myd3d.cpp(530): warning C4244: “参数”: 从“int”转换到“float”，可能丢失数据
   MyEngine.vcxproj -> C:\Users\Sun\vs_projects\MyEngine\x64\Debug\MyEngine.exe
   MyEngine.vcxproj -> C:\Users\Sun\vs_projects\MyEngine\x64\Debug\MyEngine.pdb (Partial PDB)

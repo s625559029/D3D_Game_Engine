@@ -2,6 +2,7 @@
 #define _FPSCAMERA_
 
 #include "Camera.h"
+#include "Player.h"
 
 class FPSCamera : public Camera
 {
@@ -19,7 +20,7 @@ public:
 		
 	}
 
-	void UpdateCamera();
+	void UpdateCamera(Player & player);
 
 	float moveSpeed;
 	float camSpeed;

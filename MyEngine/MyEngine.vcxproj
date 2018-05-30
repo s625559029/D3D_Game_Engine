@@ -150,9 +150,12 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AABB.h" />
+    <ClInclude Include="Bounding.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="cbPerFrame.h" />
     <ClInclude Include="cbPerObject.h" />
+    <ClInclude Include="Collision.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="D3DHeader.h" />
@@ -160,11 +163,11 @@
     <ClInclude Include="FPSPrinter.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Mesh.h" />
-    <ClInclude Include="MouseAndKeyboard.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="Movable.h" />
     <ClInclude Include="MyD3D.h" />
     <ClInclude Include="MyEngine.h" />
     <ClInclude Include="ObjectsPool.h" />
-    <ClInclude Include="Pickable.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Skybox.h" />
@@ -178,16 +181,18 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AABB.cpp" />
+    <ClCompile Include="Collision.cpp" />
     <ClCompile Include="FPSCamera.cpp" />
     <ClCompile Include="FPSPrinter.cpp" />
     <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="MouseAndKeyboard.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Movable.cpp" />
     <ClCompile Include="MyD3D.cpp" />
     <ClCompile Include="MyEngine.cpp" />
     <ClCompile Include="ObjectsPool.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Pickable.cpp" />
     <ClCompile Include="Ray.cpp" />
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="Sphere.cpp" />
