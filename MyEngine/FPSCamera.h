@@ -16,9 +16,7 @@ public:
 		camRight(DefaultRight),
 		moveSpeed(15.0f),
 		camSpeed(0.001f)
-	{
-		
-	}
+	{}
 
 	void UpdateCamera(Player & player);
 
@@ -33,8 +31,6 @@ private:
 	XMVECTOR camRight;
 
 	XMMATRIX camRotationMatrix;
-
-	DIMOUSESTATE mouseLastState;
 };
 
 #endif // !_FPSCAMERA_

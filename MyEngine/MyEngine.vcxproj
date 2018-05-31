@@ -104,7 +104,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
@@ -161,6 +161,8 @@
     <ClInclude Include="D3DHeader.h" />
     <ClInclude Include="FPSCamera.h" />
     <ClInclude Include="FPSPrinter.h" />
+    <ClInclude Include="FreeCamera.h" />
+    <ClInclude Include="HeightMap.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Player.h" />
@@ -185,6 +187,8 @@
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="FPSCamera.cpp" />
     <ClCompile Include="FPSPrinter.cpp" />
+    <ClCompile Include="FreeCamera.cpp" />
+    <ClCompile Include="HeightMap.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Movable.cpp" />

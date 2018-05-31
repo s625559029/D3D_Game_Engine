@@ -23,7 +23,7 @@ public:
 
 	virtual void Update();
 
-	void Draw(Camera & cam, cbPerObject & _cbPerObj, bool transparent);
+	virtual void Draw(Camera & cam, cbPerObject & _cbPerObj, bool transparent);
 
 	ID3D11BlendState* Transparency;
 

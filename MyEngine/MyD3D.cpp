@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "MyD3D.h"
 #include "FPSCamera.h"
+#include "FreeCamera.h"
 #include "Cube.h"
 #include "Vertex.h"
 #include "Timer.h"
@@ -18,6 +19,7 @@
 #include "Bounding.h"
 #include "Movable.h"
 #include "Collision.h"
+#include "HeightMap.h"
 
 ObjectsPool* objects_pool;
 
@@ -34,7 +36,7 @@ XMMATRIX World;
 Player player;
 
 //Camera information
-FPSCamera camera(XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f),
+FreeCamera camera(XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f),
 	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
 	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),
 	0.4f*3.14f, 1.0f, 1000.0f);
@@ -57,9 +59,9 @@ Movable bullet;
 
 std::vector<Mesh *> mesh_lists;
 
-int numBottles = 820;
-XMMATRIX bottleWorld[820];
-int* bottleHit = new int[820];
+int numBottles = 100;
+XMMATRIX bottleWorld[100];
+int* bottleHit = new int[100];
 
 float bottleBoundingSphere = 0.0f;
 std::vector<XMFLOAT3> bottleBoundingBoxVertPosArray;
@@ -174,6 +176,8 @@ void ReleaseObjects()
 	sky_box.Clean();
 	bottle.Clean();
 	bullet.Clean();
+	ground.Clean();
+	//h_ground.Clean();
 }
 
 bool InitScene(HINSTANCE & hInstance)
@@ -183,12 +187,13 @@ bool InitScene(HINSTANCE & hInstance)
 	//Init FPS Printer
 	InitD2DScreenTexture();
 
-	if (!ground.LoadObjModel(L"ground.obj", true, true))
-		return false;
-
+	//Matrix used for initialize objects
 	XMMATRIX Rotation;
 	XMMATRIX Scale;
 	XMMATRIX Translation;
+
+	if (!ground.LoadObjModel(L"ground.obj", true, true))
+		return false;
 
 	//Define ground's world space matrix
 	Rotation = XMMatrixRotationY(3.14f);
@@ -458,7 +463,7 @@ void HandleCollisions()
 		bottle.bbox.UpdateAABB(bottle.meshWorld);
 		if (bottleHit[i] == 0)
 		{
-			if (CollisionDetect(bullet, bottle, 0))
+			if (CollisionDetect(bullet, bottle, 1))
 			{
 				bullet.isMoving = false;
 				bottleHit[i] = 1;
@@ -526,7 +531,7 @@ void DrawScene()
 	//Draw transparent part
 	objects_pool->d3d11DevCon->OMSetBlendState(bottle.Transparency, NULL, 0xffffffff);
 	//Our bottle has no transparent part so we won't draw anything here
-
+	
 	RenderText(L"FPS: ", fps);
 
 	objects_pool->SwapChain->Present(0, 0);
