@@ -54,6 +54,7 @@ SkyBox sky_box;
 
 Mesh ground;
 Mesh bottle;
+HeightMap h_ground;
 
 Movable bullet;
 
@@ -177,7 +178,7 @@ void ReleaseObjects()
 	bottle.Clean();
 	bullet.Clean();
 	ground.Clean();
-	//h_ground.Clean();
+	h_ground.Clean();
 }
 
 bool InitScene(HINSTANCE & hInstance)
@@ -206,6 +207,14 @@ bool InitScene(HINSTANCE & hInstance)
 
 	if (!bullet.LoadObjModel(L"bottle.obj", true, true))
 		return false;
+
+	if (!h_ground.LoadHeightMap("heightmap.bmp"))
+		return false;
+
+	Rotation = XMMatrixRotationY(1.0f);
+	Scale = XMMatrixScaling(10.0f, 10.0f, 10.0f);
+	Translation = XMMatrixTranslation(-400.0f, -150.0f, 100.0f);
+	h_ground.meshWorld = Rotation * Scale * Translation;
 
 	//////////////
 	float bottleXPos = -30.0f;
@@ -512,7 +521,7 @@ void DrawScene()
 
 	sky_box.DrawSkyBox(camera, _cbPerObj);
 
-	ground.Draw(camera, _cbPerObj, false);
+	//ground.Draw(camera, _cbPerObj, false);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -527,6 +536,8 @@ void DrawScene()
 	}
 
 	if (bullet.isMoving) bullet.Draw(camera, _cbPerObj, false);
+
+	h_ground.Draw(camera, _cbPerObj);
 
 	//Draw transparent part
 	objects_pool->d3d11DevCon->OMSetBlendState(bottle.Transparency, NULL, 0xffffffff);

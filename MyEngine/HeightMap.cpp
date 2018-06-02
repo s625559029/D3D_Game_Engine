@@ -169,14 +169,14 @@ void HeightMap::InitHeightMap()
 	}
 
 	//Compute vertex normals (normal Averaging)
-	/*XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	int facesUsing = 0;
 	float tX;
 	float tY;
-	float tZ;*/
+	float tZ;
 
 	//Go through each vertex
-	/*for (int i = 0; i < NumVertices; ++i)
+	for (int i = 0; i < NumVertices; ++i)
 	{
 		//Check which triangles use this vertex
 		for (int j = 0; j < NumFaces; ++j)
@@ -208,13 +208,13 @@ void HeightMap::InitHeightMap()
 		//Clear normalSum and facesUsing for next vertex
 		normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		facesUsing = 0;
-	}*/
-	for (int i = 0; i < NumVertices; ++i)
+	}
+	/*for (int i = 0; i < NumVertices; ++i)
 	{
 		v[i].normal.x = 0.0f;
 		v[i].normal.y = 1.0f;
 		v[i].normal.z = 0.0f;
-	}
+	}*/
 
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
