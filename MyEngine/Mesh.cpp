@@ -1006,6 +1006,7 @@ void Mesh::Draw(Camera & cam, cbPerObject & _cbPerObj, bool transparent)
 		op->d3d11DevCon->UpdateSubresource(op->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
 		op->d3d11DevCon->VSSetConstantBuffers(0, 1, &(op->cbPerObjectBuffer));
 		op->d3d11DevCon->PSSetConstantBuffers(1, 1, &(op->cbPerObjectBuffer));
+
 		if (material[meshSubsetTexture[i]].hasTexture)
 			op->d3d11DevCon->PSSetShaderResources(0, 1, &meshSRV[material[meshSubsetTexture[i]].texArrayIndex]);
 		if (material[meshSubsetTexture[i]].hasNormMap)

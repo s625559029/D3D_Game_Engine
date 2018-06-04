@@ -88,7 +88,7 @@ void HeightMap::InitHeightMap()
 	NumVertices = rows * cols;
 	NumFaces = (rows - 1)*(cols - 1) * 2;
 
-	std::vector<Vertex> v(NumVertices);
+	v.resize(NumVertices);
 
 	for (DWORD i = 0; i < rows; ++i)
 	{
@@ -99,7 +99,7 @@ void HeightMap::InitHeightMap()
 		}
 	}
 
-	std::vector<DWORD> indices(NumFaces * 3);
+	indices.resize(NumFaces * 3);
 
 	int k = 0;
 	int texUIndex = 0;
@@ -260,9 +260,14 @@ void HeightMap::Draw(Camera & cam, cbPerObject & _cbPerObj)
 	XMMATRIX WVP = meshWorld * cam.camView * cam.camProj;
 	_cbPerObj.WVP = XMMatrixTranspose(WVP);
 	_cbPerObj.World = XMMatrixTranspose(meshWorld);
+	_cbPerObj.difColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	_cbPerObj.hasTexture = true;
+	_cbPerObj.hasNormMap = false;
+
 	op->d3d11DevCon->UpdateSubresource(op->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
 	op->d3d11DevCon->VSSetConstantBuffers(0, 1, &op->cbPerObjectBuffer);
+	op->d3d11DevCon->PSSetConstantBuffers(1, 1, &(op->cbPerObjectBuffer));
+
 	op->d3d11DevCon->PSSetShaderResources(0, 1, &op->CubesTexture);
 	op->d3d11DevCon->PSSetSamplers(0, 1, &op->CubesTexSamplerState);
 

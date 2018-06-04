@@ -18,12 +18,13 @@ public:
 		camSpeed(0.001f)
 	{}
 
-	void UpdateCamera(Player & player);
+	void UpdateCamera(Player & player,
+		std::vector<XMFLOAT3>& collidableGeometryPositions,
+		std::vector<DWORD>& collidableGeometryIndices);
 
 	float moveSpeed;
 	float camSpeed;
 
-private:
 	XMVECTOR DefaultForward;
 	XMVECTOR DefaultRight;
 

@@ -3,6 +3,7 @@
 
 #include "D3DHeader.h"
 #include "Mesh.h"
+#include "Vertex.h"
 
 struct HeightMapInfo {        // Heightmap structure
 	int terrainWidth;        // Width of heightmap
@@ -23,6 +24,9 @@ public:
 	int NumVertices = 0;
 
 	HeightMapInfo hminfo;
+
+	std::vector<Vertex> v;
+	std::vector<DWORD> indices;
 };
 
 

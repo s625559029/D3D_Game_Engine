@@ -53,10 +53,10 @@ Light light;
 SkyBox sky_box;
 
 Mesh ground;
-Mesh bottle;
+//Mesh bottle;
 HeightMap h_ground;
 
-Movable bullet;
+//Movable bullet;
 
 std::vector<Mesh *> mesh_lists;
 
@@ -73,6 +73,10 @@ XMVECTOR bottleCenterOffset;
 int pickWhat = 1;
 
 AABB bbox;
+
+//Collidale objects soup
+std::vector<XMFLOAT3> collidableGeometryPositions;
+std::vector<DWORD> collidableGeometryIndices;
 
 //Declare input layout
 D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -175,8 +179,8 @@ void ReleaseObjects()
 {
 	objects_pool->clean();
 	sky_box.Clean();
-	bottle.Clean();
-	bullet.Clean();
+	//bottle.Clean();
+	//bullet.Clean();
 	ground.Clean();
 	h_ground.Clean();
 }
@@ -202,22 +206,43 @@ bool InitScene(HINSTANCE & hInstance)
 	Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 	ground.meshWorld = Rotation * Scale * Translation;
 
-	if (!bottle.LoadObjModel(L"bottle.obj", true, true))
-		return false;
+	//if (!bottle.LoadObjModel(L"bottle.obj", true, true))
+		//return false;
 
-	if (!bullet.LoadObjModel(L"bottle.obj", true, true))
-		return false;
+	//if (!bullet.LoadObjModel(L"bottle.obj", true, true))
+		//return false;
 
 	if (!h_ground.LoadHeightMap("heightmap.bmp"))
 		return false;
 
 	Rotation = XMMatrixRotationY(1.0f);
 	Scale = XMMatrixScaling(10.0f, 10.0f, 10.0f);
-	Translation = XMMatrixTranslation(-400.0f, -150.0f, 100.0f);
+	Translation = XMMatrixTranslation(-200.0f, -100.0f, 0.0f);
 	h_ground.meshWorld = Rotation * Scale * Translation;
 
+	//Init collision soup 
+	int vertexOffset = collidableGeometryPositions.size();    // Vertex offset (each "mesh" will be added to the end of the positions array)
+
+	// Temp arrays because we need to store the geometry in world space
+	XMVECTOR tempVertexPosVec;
+	XMFLOAT3 tempVertF3;
+
+	// Push back vertex positions to the polygon soup
+	for (int i = 0; i < h_ground.v.size(); i++)
+	{
+		tempVertexPosVec = XMLoadFloat3(&h_ground.v[i].pos);
+		tempVertexPosVec = XMVector3TransformCoord(tempVertexPosVec, h_ground.meshWorld);
+		XMStoreFloat3(&tempVertF3, tempVertexPosVec);
+		collidableGeometryPositions.push_back(tempVertF3);
+	}
+
+	for (int i = 0; i < h_ground.indices.size(); i++)
+	{
+		collidableGeometryIndices.push_back(h_ground.indices[i] + vertexOffset);
+	}
+
 	//////////////
-	float bottleXPos = -30.0f;
+	/*float bottleXPos = -30.0f;
 	float bottleZPos = 30.0f;
 	float bxadd = 0.0f;
 	float bzadd = 0.0f;
@@ -239,20 +264,20 @@ bool InitScene(HINSTANCE & hInstance)
 		bottleWorld[i] = Rotation * Scale * Translation;
 
 		bottleHit[i] = 0;
-	}
+	}*/
 	/////////////
 
-	CreateBoundingSphere(bottle.vertPosArray, bottleBoundingSphere, bottleCenterOffset);
+	//CreateBoundingSphere(bottle.vertPosArray, bottleBoundingSphere, bottleCenterOffset);
 
-	bottle.bounding_sphere_radius = bottleBoundingSphere;
-	bottle.center_offset = bottleCenterOffset;
-	bullet.bounding_sphere_radius = bottleBoundingSphere;
-	bullet.center_offset = bottleCenterOffset;
+	//bottle.bounding_sphere_radius = bottleBoundingSphere;
+	//bottle.center_offset = bottleCenterOffset;
+	//bullet.bounding_sphere_radius = bottleBoundingSphere;
+	//bullet.center_offset = bottleCenterOffset;
 
-	bbox.CreateAABB(bottle.vertPosArray);
-	bottle.bbox = bbox;
-	bbox.CreateAABB(bullet.vertPosArray);
-	bullet.bbox = bbox;
+	//bbox.CreateAABB(bottle.vertPosArray);
+	//bottle.bbox = bbox;
+	//bbox.CreateAABB(bullet.vertPosArray);
+	//bullet.bbox = bbox;
 
 	//Shader process
 	D3DX11CompileFromFile(L"Effects.fx", 0, 0, "VS", "vs_4_0", 0, 0, 0, &(objects_pool->VS_Buffer), 0, 0);
@@ -450,10 +475,10 @@ void CheckRayIntersect()
 			bottleHit[hitIndex] = 1;
 		}*/
 
-		bullet.isMoving = true;
+		/*bullet.isMoving = true;
 		bullet.meshWorld = XMMatrixIdentity();
 		bullet.meshWorld = XMMatrixTranslation(XMVectorGetX(camera.camPosition), XMVectorGetY(camera.camPosition), XMVectorGetZ(camera.camPosition));
-		bullet.meshDir = camera.camTarget - camera.camPosition;
+		bullet.meshDir = camera.camTarget - camera.camPosition;*/
 
 		preShoot = true;
 	}
@@ -465,7 +490,7 @@ void CheckRayIntersect()
 
 void HandleCollisions()
 {
-	bullet.bbox.UpdateAABB(bullet.meshWorld);
+	/*bullet.bbox.UpdateAABB(bullet.meshWorld);
 	for (int i = 0; i < numBottles; i++)
 	{
 		bottle.meshWorld = bottleWorld[i];
@@ -478,20 +503,20 @@ void HandleCollisions()
 				bottleHit[i] = 1;
 			}
 		}
-	}
+	}*/
 }
 
 void UpdateScene(double time)
 {
 	player.DetectInput(time);
 	
-	camera.UpdateCamera(player);
+	camera.UpdateCamera(player, collidableGeometryPositions, collidableGeometryIndices);
 
 	sky_box.UpdateSkyBox(camera);
 
 	CheckRayIntersect();
 
-	bullet.Update(time);
+	//bullet.Update(time);
 
 	HandleCollisions();
 }
@@ -519,28 +544,28 @@ void DrawScene()
 	//Draw non transparent part
 	objects_pool->d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
 
-	sky_box.DrawSkyBox(camera, _cbPerObj);
-
 	//ground.Draw(camera, _cbPerObj, false);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
-	for (int i = 0; i < numBottles; i++)
+	/*for (int i = 0; i < numBottles; i++)
 	{
 		if (bottleHit[i] == 0) 
 		{
 			bottle.meshWorld = bottleWorld[i];
 			bottle.Draw(camera, _cbPerObj, false);
 		}
-	}
+	}*/
 
-	if (bullet.isMoving) bullet.Draw(camera, _cbPerObj, false);
+	//if (bullet.isMoving) bullet.Draw(camera, _cbPerObj, false);
 
 	h_ground.Draw(camera, _cbPerObj);
 
+	sky_box.DrawSkyBox(camera, _cbPerObj);
+
 	//Draw transparent part
-	objects_pool->d3d11DevCon->OMSetBlendState(bottle.Transparency, NULL, 0xffffffff);
+	//objects_pool->d3d11DevCon->OMSetBlendState(bottle.Transparency, NULL, 0xffffffff);
 	//Our bottle has no transparent part so we won't draw anything here
 	
 	RenderText(L"FPS: ", fps);

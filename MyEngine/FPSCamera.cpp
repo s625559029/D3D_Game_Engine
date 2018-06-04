@@ -3,8 +3,11 @@
 #include "FPSCamera.h"
 #include "ObjectsPool.h"
 #include "Player.h"
+#include "Collision.h"
 
-void FPSCamera::UpdateCamera(Player & player)
+void FPSCamera::UpdateCamera(Player & player, 
+std::vector<XMFLOAT3>& collidableGeometryPositions,
+std::vector<DWORD>& collidableGeometryIndices)
 {
 	float moveBackForward = player.keyboardForwardBack * moveSpeed;
 	float moveLeftRight = player.keyboardLeftRight * moveSpeed;
@@ -23,8 +26,19 @@ void FPSCamera::UpdateCamera(Player & player)
 	camUp = XMVector3TransformCoord(camUp, RotateYTempMatrix);
 	camForward = XMVector3TransformCoord(DefaultForward, RotateYTempMatrix);
 
-	camPosition += moveLeftRight*camRight;
-	camPosition += moveBackForward*camForward;
+	//camPosition += moveLeftRight*camRight;
+	//camPosition += moveBackForward*camForward;
+
+	//////////////
+	CollisionPacket cameraCP;
+	cameraCP.ellipsoidSpace = XMVectorSet(1.0f, 3.0f, 1.0f, 0.0f);
+	cameraCP.w_Position = camPosition;
+	cameraCP.w_Velocity = (moveLeftRight*camRight) + (moveBackForward*camForward);
+
+	camPosition = CollisionSlide(cameraCP,
+		collidableGeometryPositions,
+		collidableGeometryIndices);
+	//////////////
 
 	moveLeftRight = 0.0f;
 	moveBackForward = 0.0f;
