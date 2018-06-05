@@ -130,7 +130,8 @@ XMVECTOR CollideWithWorld(CollisionPacket& cP,
 	std::vector<DWORD>& indices)
 {
 	// These are based off the unitsPerMeter from above
-	float unitScale = unitsPerMeter / 100.0f;
+	//float unitScale = unitsPerMeter / 100.0f;
+	float unitScale = 1.0f;
 	float veryCloseDistance = 0.005f * unitScale;	// This is used to keep the sphere from actually "touching" 
 													// the triangle, as that would cause problems since
 													// each loop it would ALWAYS find a collision instead

@@ -36,7 +36,7 @@ XMMATRIX World;
 Player player;
 
 //Camera information
-FreeCamera camera(XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f),
+FPSCamera camera(XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f),
 	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
 	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),
 	0.4f*3.14f, 1.0f, 1000.0f);
@@ -185,6 +185,8 @@ void ReleaseObjects()
 	h_ground.Clean();
 }
 
+int vertexOffset;
+
 bool InitScene(HINSTANCE & hInstance)
 {
 	player.InitDirectInput(hInstance);
@@ -214,14 +216,14 @@ bool InitScene(HINSTANCE & hInstance)
 
 	if (!h_ground.LoadHeightMap("heightmap.bmp"))
 		return false;
-
+	
 	Rotation = XMMatrixRotationY(1.0f);
 	Scale = XMMatrixScaling(10.0f, 10.0f, 10.0f);
 	Translation = XMMatrixTranslation(-200.0f, -100.0f, 0.0f);
 	h_ground.meshWorld = Rotation * Scale * Translation;
 
 	//Init collision soup 
-	int vertexOffset = collidableGeometryPositions.size();    // Vertex offset (each "mesh" will be added to the end of the positions array)
+	vertexOffset = collidableGeometryPositions.size();    // Vertex offset (each "mesh" will be added to the end of the positions array)
 
 	// Temp arrays because we need to store the geometry in world space
 	XMVECTOR tempVertexPosVec;
@@ -514,11 +516,11 @@ void UpdateScene(double time)
 
 	sky_box.UpdateSkyBox(camera);
 
-	CheckRayIntersect();
+	//CheckRayIntersect();
 
 	//bullet.Update(time);
 
-	HandleCollisions();
+	//HandleCollisions();
 }
 
 void DrawScene()

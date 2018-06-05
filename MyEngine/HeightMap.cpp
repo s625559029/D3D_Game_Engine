@@ -108,24 +108,24 @@ void HeightMap::InitHeightMap()
 	{
 		for (DWORD j = 0; j < cols - 1; j++)
 		{
-			indices[k] = i*cols + j;        // Bottom left of quad
+			indices[k] = i*cols + j;		// Bottom left of quad
 			v[i*cols + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 1.0f);
-			
-			indices[k + 1] = i*cols + j + 1;        // Bottom right of quad
-			v[i*cols + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
 
-			indices[k + 2] = (i + 1)*cols + j;    // Top left of quad
+			indices[k + 1] = (i + 1)*cols + j;	// Top left of quad
 			v[(i + 1)*cols + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
 
-
-			indices[k + 3] = (i + 1)*cols + j;    // Top left of quad
-			v[(i + 1)*cols + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
-
-			indices[k + 4] = i*cols + j + 1;        // Bottom right of quad
+			indices[k + 2] = i*cols + j + 1;		// Bottom right of quad
 			v[i*cols + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
 
-			indices[k + 5] = (i + 1)*cols + j + 1;    // Top right of quad
+
+			indices[k + 3] = (i + 1)*cols + j;	// Top left of quad
+			v[(i + 1)*cols + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
+
+			indices[k + 4] = (i + 1)*cols + j + 1;	// Top right of quad
 			v[(i + 1)*cols + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 0.0f);
+
+			indices[k + 5] = i*cols + j + 1;		// Bottom right of quad
+			v[i*cols + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
 
 			k += 6; // next quad
 
@@ -134,7 +134,7 @@ void HeightMap::InitHeightMap()
 		texUIndex = 0;
 		texVIndex++;
 	}
-
+	//Now we will compute the normals for each vertex using normal averaging
 	//Now we will compute the normals for each vertex using normal averaging
 	std::vector<XMFLOAT3> tempNormal;
 
@@ -155,17 +155,17 @@ void HeightMap::InitHeightMap()
 		vecX = v[indices[(i * 3)]].pos.x - v[indices[(i * 3) + 2]].pos.x;
 		vecY = v[indices[(i * 3)]].pos.y - v[indices[(i * 3) + 2]].pos.y;
 		vecZ = v[indices[(i * 3)]].pos.z - v[indices[(i * 3) + 2]].pos.z;
-		edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);    //Create our first edge
+		edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);	//Create our first edge
 
 														//Get the vector describing another edge of our triangle (edge 2,1)
 		vecX = v[indices[(i * 3) + 2]].pos.x - v[indices[(i * 3) + 1]].pos.x;
 		vecY = v[indices[(i * 3) + 2]].pos.y - v[indices[(i * 3) + 1]].pos.y;
 		vecZ = v[indices[(i * 3) + 2]].pos.z - v[indices[(i * 3) + 1]].pos.z;
-		edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);    //Create our second edge
+		edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);	//Create our second edge
 
 														//Cross multiply the two edge vectors to get the un-normalized face normal
-		XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
-		tempNormal.push_back(unnormalized);            //Save unormalized normal (for normal averaging)
+		XMStoreFloat3(&unnormalized, XMVector3Cross(edge2, edge1));
+		tempNormal.push_back(unnormalized);			//Save unormalized normal (for normal averaging)
 	}
 
 	//Compute vertex normals (normal Averaging)
@@ -189,7 +189,7 @@ void HeightMap::InitHeightMap()
 				tY = XMVectorGetY(normalSum) + tempNormal[j].y;
 				tZ = XMVectorGetZ(normalSum) + tempNormal[j].z;
 
-				normalSum = XMVectorSet(tX, tY, tZ, 0.0f);    //If a face is using the vertex, add the unormalized face normal to the normalSum
+				normalSum = XMVectorSet(tX, tY, tZ, 0.0f);	//If a face is using the vertex, add the unormalized face normal to the normalSum
 				facesUsing++;
 			}
 		}
@@ -271,6 +271,6 @@ void HeightMap::Draw(Camera & cam, cbPerObject & _cbPerObj)
 	op->d3d11DevCon->PSSetShaderResources(0, 1, &op->CubesTexture);
 	op->d3d11DevCon->PSSetSamplers(0, 1, &op->CubesTexSamplerState);
 
-	op->d3d11DevCon->RSSetState(op->CCWcullMode);
+	op->d3d11DevCon->RSSetState(op->CWcullMode);
 	op->d3d11DevCon->DrawIndexed(NumFaces * 3, 0, 0);
 }
