@@ -35,6 +35,8 @@ std::vector<DWORD>& collidableGeometryIndices)
 	cameraCP.w_Position = camPosition;
 	cameraCP.w_Velocity = (moveLeftRight*camRight) + (moveBackForward*camForward);
 
+	if (player.isJump) cameraCP.w_Velocity += (jumpHeight*camUp);
+
 	camPosition = CollisionSlide(cameraCP,
 		collidableGeometryPositions,
 		collidableGeometryIndices);

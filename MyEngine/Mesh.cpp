@@ -957,7 +957,6 @@ bool Mesh::LoadObjModel(std::wstring filename,
 
 	op->d3d11Device->CreateBlendState(&blendDesc, &Transparency);
 
-
 	return true;
 }
 

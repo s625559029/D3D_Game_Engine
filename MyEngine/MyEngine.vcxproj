@@ -163,6 +163,7 @@
     <ClInclude Include="FPSPrinter.h" />
     <ClInclude Include="FreeCamera.h" />
     <ClInclude Include="HeightMap.h" />
+    <ClInclude Include="Instance.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Player.h" />
@@ -171,6 +172,7 @@
     <ClInclude Include="MyEngine.h" />
     <ClInclude Include="ObjectsPool.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="Quad.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Sphere.h" />
@@ -189,6 +191,7 @@
     <ClCompile Include="FPSPrinter.cpp" />
     <ClCompile Include="FreeCamera.cpp" />
     <ClCompile Include="HeightMap.cpp" />
+    <ClCompile Include="Instance.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Movable.cpp" />
@@ -197,6 +200,7 @@
     <ClCompile Include="ObjectsPool.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Ray.cpp" />
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="Sphere.cpp" />

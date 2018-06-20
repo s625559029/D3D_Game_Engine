@@ -15,7 +15,8 @@ public:
 		camForward(DefaultForward),
 		camRight(DefaultRight),
 		moveSpeed(15.0f),
-		camSpeed(0.001f)
+		camSpeed(0.001f),
+		jumpHeight(0.3f)
 	{}
 
 	void UpdateCamera(Player & player,
@@ -24,6 +25,7 @@ public:
 
 	float moveSpeed;
 	float camSpeed;
+	float jumpHeight;
 
 	XMVECTOR DefaultForward;
 	XMVECTOR DefaultRight;

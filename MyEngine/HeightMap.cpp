@@ -263,6 +263,8 @@ void HeightMap::Draw(Camera & cam, cbPerObject & _cbPerObj)
 	_cbPerObj.difColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	_cbPerObj.hasTexture = true;
 	_cbPerObj.hasNormMap = false;
+	_cbPerObj.isInstance = false;
+	_cbPerObj.isLeaf = false;
 
 	op->d3d11DevCon->UpdateSubresource(op->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
 	op->d3d11DevCon->VSSetConstantBuffers(0, 1, &op->cbPerObjectBuffer);

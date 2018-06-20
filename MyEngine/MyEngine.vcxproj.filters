@@ -111,6 +111,12 @@
     <ClInclude Include="HeightMap.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Instance.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Quad.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -165,6 +171,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="HeightMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Instance.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Quad.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

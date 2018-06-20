@@ -21,6 +21,7 @@ public:
 	ID3D10Blob* PS_Buffer;
 	ID3D11InputLayout* vertLayout;
 	ID3D11Buffer* cbPerObjectBuffer;
+	ID3D11Buffer* cbPerInstanceBuffer;
 	ID3D11ShaderResourceView* CubesTexture;
 	ID3D11SamplerState* CubesTexSamplerState;
 

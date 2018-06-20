@@ -14,12 +14,14 @@
 #include "cbPerObject.h"
 #include "Skybox.h"
 #include "Mesh.h"
+#include "Instance.h"
 #include "Ray.h"
 #include "AABB.h"
 #include "Bounding.h"
 #include "Movable.h"
 #include "Collision.h"
 #include "HeightMap.h"
+#include "Quad.h"
 
 ObjectsPool* objects_pool;
 
@@ -85,10 +87,43 @@ D3D11_INPUT_ELEMENT_DESC layout[] =
 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{ "BITANGENT", 0,  DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-};
+	{ "BITANGENT", 0,  DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 
+	// Data from the instance buffer
+	{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1},
+};
 UINT numElements = ARRAYSIZE(layout);
+
+//trees
+const int numLeavesPerTree = 800;
+const int numTrees = 50;
+
+D3D11_INPUT_ELEMENT_DESC leafLayout[] =
+{
+	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "BITANGENT", 0,  DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
+	// Instance elements
+	// last parameter (InstanceDataStepRate) is set to the number of leaves per tree. InstanceDataStepRate is the number
+	// of instances to draw before moving on to the next element in the instance buffer, in this case, the next tree position.
+	// We want to make sure that ALL the leaves are drawn for the current tree before moving to the next trees position
+	{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, numLeavesPerTree }
+};
+UINT numLeafElements = ARRAYSIZE(leafLayout);
+
+Instance tree;
+Quad leaf;
+
+struct cbPerScene
+{
+	XMMATRIX leafOnTree[numLeavesPerTree];
+};
+cbPerScene cbPerInst;
+
+ID3D11InputLayout* leafVertLayout;
 
 bool InitializeDirect3d11App(HINSTANCE hInstance)
 {
@@ -208,6 +243,77 @@ bool InitScene(HINSTANCE & hInstance)
 	Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 	ground.meshWorld = Rotation * Scale * Translation;
 
+	// Set up the tree positions then instance buffer
+	std::vector<InstanceData> inst(numTrees);
+	XMVECTOR tempPos;
+	srand(100);
+	// We are just creating random positions for the trees, between the positions of (-100, 0, -100) to (100, 0, 100)
+	// then storing the position in our instanceData array
+	for (int i = 0; i < numTrees; i++)
+	{
+		float randX = ((float)(rand() % 2000) / 10) - 100;
+		float randZ = ((float)(rand() % 2000) / 10) - 100;
+		tempPos = XMVectorSet(randX, 0.0f, randZ, 0.0f);
+
+		XMStoreFloat3(&inst[i].pos, tempPos);
+	}
+	tree.LoadObjModel(L"tree.obj", true, true, numTrees, inst);
+
+	leaf.load(L"leaf.png");
+
+	// Here we create the leaf world matrices, that will be the leafs
+	// position and orientation on the tree each individual tree. We will create an array of matrices
+	// for the leaves that we will send to the shaders in the cbPerInstance constant buffer
+	// This matrix array is used "per tree", so that each tree gets the exact same number of leaves,
+	// with the same orientation, position, and scale as all of the other trees
+	// Start by initializing the matrix array
+	srand(100);
+	XMFLOAT3 fTPos;
+	XMMATRIX rotationMatrix;
+	XMMATRIX tempMatrix;
+	for (int i = 0; i < numLeavesPerTree; i++)
+	{
+		float rotX = (rand() % 2000) / 500.0f; // Value between 0 and 4 PI (two circles, makes it slightly more mixed)
+		float rotY = (rand() % 2000) / 500.0f;
+		float rotZ = (rand() % 2000) / 500.0f;
+
+		// the rand() function is slightly more biased towards lower numbers, which would make the center of
+		// the leaf "mass" be more dense with leaves than the outside of the "sphere" of leaves we are making.
+		// We want the outside of the "sphere" of leaves to be more dense than the inside, so the way we do this
+		// is getting a distance value between 0 and 4, we then subtract that value from 6, so that the very center
+		// does not have any leaves. then below you can see we are checking to see if the distance is greater than 4
+		// (because the tree branches are approximately 4 units radius from the center of the tree). If the distance
+		// is greater than 4, then we set it at 4, which will make the edge of the "sphere" of leaves more densly
+		// populated than the center of the leaf mass
+		float distFromCenter = 6.0f - ((rand() % 1000) / 250.0f);
+
+		if (distFromCenter > 4.0f)
+			distFromCenter = 4.0f;
+
+		// Now we create a vector with the length of distFromCenter, by simply setting it's x component as distFromCenter.
+		// We will now rotate the vector, which will give us the "sphere" of leaves after we have rotated all the leaves.
+		// We do not want a perfect sphere, more like a half sphere to cover the branches, so we check to see if the y
+		// value is less than -1.0f (giving us slightly more than half a sphere), and if it is, negate it so it is reflected
+		// across the xz plane
+		tempPos = XMVectorSet(distFromCenter, 0.0f, 0.0f, 0.0f);
+		rotationMatrix = XMMatrixRotationRollPitchYaw(rotX, rotY, rotZ);
+		tempPos = XMVector3TransformCoord(tempPos, rotationMatrix);
+
+		if (XMVectorGetY(tempPos) < -1.0f)
+			tempPos = XMVectorSetY(tempPos, -XMVectorGetY(tempPos));
+
+		// Now we create our leaves "tree" matrix (this is not the leaves "world matrix", because we are not
+		// defining the leaves position, orientation, and scale in world space, but instead in "tree" space
+		XMStoreFloat3(&fTPos, tempPos);
+
+		Scale = XMMatrixScaling(0.25f, 0.25f, 0.25f);
+		Translation = XMMatrixTranslation(fTPos.x, fTPos.y + 8.0f, fTPos.z);
+		tempMatrix = Scale * rotationMatrix * Translation;
+
+		// To make things simple, we just store the matrix directly into our cbPerInst structure
+		cbPerInst.leafOnTree[i] = XMMatrixTranspose(tempMatrix);
+	}
+
 	//if (!bottle.LoadObjModel(L"bottle.obj", true, true))
 		//return false;
 
@@ -219,7 +325,7 @@ bool InitScene(HINSTANCE & hInstance)
 	
 	Rotation = XMMatrixRotationY(1.0f);
 	Scale = XMMatrixScaling(10.0f, 10.0f, 10.0f);
-	Translation = XMMatrixTranslation(-200.0f, -100.0f, 0.0f);
+	Translation = XMMatrixTranslation(-200.0f, -30.0f, 0.0f);
 	h_ground.meshWorld = Rotation * Scale * Translation;
 
 	//Init collision soup 
@@ -302,6 +408,9 @@ bool InitScene(HINSTANCE & hInstance)
 	objects_pool->d3d11Device->CreateInputLayout(layout, numElements, objects_pool->VS_Buffer->GetBufferPointer(),
 		objects_pool->VS_Buffer->GetBufferSize(), &(objects_pool->vertLayout));
 
+	objects_pool->d3d11Device->CreateInputLayout(leafLayout, numLeafElements, objects_pool->VS_Buffer->GetBufferPointer(),
+		objects_pool->VS_Buffer->GetBufferSize(), &leafVertLayout);
+
 	//Set input layout
 	objects_pool->d3d11DevCon->IASetInputLayout(objects_pool->vertLayout);
 
@@ -344,6 +453,22 @@ bool InitScene(HINSTANCE & hInstance)
 	cbbd.MiscFlags = 0;
 
 	objects_pool->d3d11Device->CreateBuffer(&cbbd, NULL, &(objects_pool->cbPerFrameBuffer));
+
+	//Create the buffer to send to the cbuffer per instance in effect file
+	ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
+
+	cbbd.Usage = D3D11_USAGE_DEFAULT;
+	// We have already defined how many elements are in our leaf matrix array inside the cbPerScene structure,
+	// so we only need the size of the entire structure here, because the number of leaves per tree will not
+	// change throughout the scene.
+	cbbd.ByteWidth = sizeof(cbPerScene);
+	cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbbd.CPUAccessFlags = 0;
+	cbbd.MiscFlags = 0;
+
+	objects_pool->d3d11Device->CreateBuffer(&cbbd, NULL, &objects_pool->cbPerInstanceBuffer);
+
+	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerInstanceBuffer, 0, NULL, &cbPerInst, 0, 0);
 
 	D3DX11CreateShaderResourceViewFromFile(objects_pool->d3d11Device, L"grass.jpg", NULL, NULL, &(objects_pool->CubesTexture), NULL );
 
@@ -564,6 +689,9 @@ void DrawScene()
 
 	h_ground.Draw(camera, _cbPerObj);
 
+	DrawLeaves();
+	tree.Draw(camera, _cbPerObj, numTrees);
+
 	sky_box.DrawSkyBox(camera, _cbPerObj);
 
 	//Draw transparent part
@@ -582,4 +710,51 @@ void CreateLight()
 	light.dir = XMFLOAT3(0.0f, 1.0f, -1.0f);
 	light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+void DrawLeaves()
+{
+	///***Draw INSTANCED Leaf Models***///
+	// We are now binding two buffers to the input assembler, one for the vertex data,
+	// and one for the instance data, so we will have to create a strides array, offsets array
+	// and buffer array.
+	UINT strides[2] = { sizeof(Vertex), sizeof(InstanceData) };
+	UINT offsets[2] = { 0, 0 };
+
+	// Store the vertex and instance buffers into an array
+	// The leaves will use the same instance buffer as the trees, because we need each leaf
+	// to go to a certain tree
+	ID3D11Buffer* vertInstBuffers[2] = { leaf.quadVertBuffer, tree.instanceBuff };
+
+	// Set the leaf input layout. This is where we will set our special input layout for our leaves
+	objects_pool->d3d11DevCon->IASetInputLayout(leafVertLayout);
+
+	//Set the models index buffer (same as before)
+	objects_pool->d3d11DevCon->IASetIndexBuffer(leaf.quadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	//Set the models vertex and isntance buffer using the arrays created above
+	objects_pool->d3d11DevCon->IASetVertexBuffers(0, 2, vertInstBuffers, strides, offsets);
+
+	//Set the WVP matrix and send it to the constant buffer in effect file
+	WVP = tree.meshWorld * camera.camView * camera.camProj;
+	_cbPerObj.WVP = XMMatrixTranspose(WVP);
+	_cbPerObj.World = XMMatrixTranspose(tree.meshWorld);
+	_cbPerObj.hasTexture = true;        // We'll assume all md5 subsets have textures
+	_cbPerObj.hasNormMap = false;    // We'll also assume md5 models have no normal map (easy to change later though)
+	_cbPerObj.isInstance = true;        // Tell shaders if this is instanced data so it will know to use instance data or not
+	_cbPerObj.isLeaf = true;        // Tell shaders if this is the leaf instance so it will know to the cbPerInstance data or not
+	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
+
+	// We are sending two constant buffers to the vertex shader now, wo we will create an array of them
+	ID3D11Buffer* vsConstBuffers[2] = { objects_pool->cbPerObjectBuffer, objects_pool->cbPerInstanceBuffer };
+	objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 2, vsConstBuffers);
+	objects_pool->d3d11DevCon->PSSetConstantBuffers(1, 1, &objects_pool->cbPerObjectBuffer);
+	objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &leaf.leafTexture);
+	objects_pool->d3d11DevCon->PSSetSamplers(0, 1, &objects_pool->CubesTexSamplerState);
+
+	objects_pool->d3d11DevCon->RSSetState(objects_pool->RSCullNone);
+	objects_pool->d3d11DevCon->DrawIndexedInstanced(6, numLeavesPerTree * numTrees, 0, 0, 0);
+
+	// Reset the default Input Layout
+	objects_pool->d3d11DevCon->IASetInputLayout(objects_pool->vertLayout);
 }

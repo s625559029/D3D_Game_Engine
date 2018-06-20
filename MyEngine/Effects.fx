@@ -1,3 +1,5 @@
+#define NUM_LEAVES_PER_TREE 800
+
 struct Light
 {
     float3 dir;
@@ -18,6 +20,14 @@ cbuffer cbPerObject
     float4 difColor;
     bool hasTexture;
     bool hasNormMap;
+
+    bool isInstance;
+    bool isLeaf;
+};
+
+cbuffer cbPerScene
+{
+    float4x4 leafOnTree[NUM_LEAVES_PER_TREE];
 };
 
 Texture2D ObjTexture;
@@ -40,9 +50,21 @@ struct SKYMAP_VS_OUTPUT    //output structure for skymap vertex shader
     float3 texCoord : TEXCOORD;
 };
 
-VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL, float3 tangent : TANGENT, float3 biTangent : BITANGENT)
+VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL, float3 tangent : TANGENT, float3 biTangent : BITANGENT, float3 instancePos : INSTANCEPOS, uint instanceID : SV_InstanceID)
 {
     VS_OUTPUT output;
+
+    if(isInstance)
+    {
+        if(isLeaf)
+        {
+            uint currTree = (instanceID / NUM_LEAVES_PER_TREE);
+            uint currLeafInTree = instanceID - (currTree * NUM_LEAVES_PER_TREE);
+            inPos = mul(inPos, leafOnTree[currLeafInTree]);
+        }
+
+        inPos += float4(instancePos, 0.0f);
+    }
 
     output.pos = mul(inPos, WVP);
 

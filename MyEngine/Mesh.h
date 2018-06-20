@@ -5,7 +5,6 @@
 #include "SurfaceMaterial.h"
 #include "Camera.h"
 #include "cbPerObject.h"
-#include "ObjectsPool.h"
 #include "AABB.h"
 
 class Mesh

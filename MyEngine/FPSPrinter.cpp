@@ -218,6 +218,11 @@ void RenderText(std::wstring text, float inInt)
 	cbPerObject _cbPerObj;
 	_cbPerObj.World = XMMatrixTranspose(WVP);
 	_cbPerObj.WVP = XMMatrixTranspose(WVP);
+	_cbPerObj.hasNormMap = false;
+	_cbPerObj.hasTexture = false;
+	_cbPerObj.isInstance = false;
+	_cbPerObj.isLeaf = false;
+
 	objects_pool->d3d11DevCon->UpdateSubresource(objects_pool->cbPerObjectBuffer, 0, NULL, &_cbPerObj, 0, 0);
 	objects_pool->d3d11DevCon->VSSetConstantBuffers(0, 1, &(objects_pool->cbPerObjectBuffer));
 	objects_pool->d3d11DevCon->PSSetShaderResources(0, 1, &(objects_pool->d2dTexture));

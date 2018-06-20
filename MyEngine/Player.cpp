@@ -35,6 +35,7 @@ void Player::DetectInput(double time)
 
 	keyboardForwardBack = 0.0f;
 	keyboardLeftRight = 0.0f;
+	isJump = false;
 
 	DIMOUSESTATE mouseCurrState;
 
@@ -67,7 +68,10 @@ void Player::DetectInput(double time)
 	{
 		keyboardForwardBack -= time;
 	}
-
+	if (keyboardState[DIK_SPACE] & 0x80)
+	{
+		isJump = true;
+	}
 	//Check mouse movement
 	if ((mouseCurrState.lX != mouseLastState.lX) || (mouseCurrState.lY != mouseLastState.lY))
 	{
@@ -77,6 +81,9 @@ void Player::DetectInput(double time)
 
 		mouseLastState = mouseCurrState;
 	}
+
+	if (mouseUpDown < -1569) mouseUpDown = -1569;
+	if (mouseUpDown > 1569) mouseUpDown = 1569;
 
 	//Check mouse left button click
 	if (mouseCurrState.rgbButtons[0])

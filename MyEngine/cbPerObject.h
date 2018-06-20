@@ -13,6 +13,10 @@ struct cbPerObject
 	BOOL hasTexture;
 
 	BOOL hasNormMap;
+
+	//for tree instances
+	BOOL isInstance;
+	BOOL isLeaf;
 };
 
 #endif // !_CBPEROBJECTS_

@@ -23,6 +23,7 @@ public:
 	float mouseLeftRight;
 	float mouseUpDown;
 	bool isShoot;
+	bool isJump;
 
 	int mouseX;
 	int mouseY;

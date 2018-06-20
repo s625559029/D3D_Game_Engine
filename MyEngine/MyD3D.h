@@ -7,5 +7,6 @@ bool InitScene(HINSTANCE & hInstance);
 void UpdateScene(double time);
 void DrawScene();
 void CreateLight();
+void DrawLeaves();
 
 #endif // !_MYD3D_
